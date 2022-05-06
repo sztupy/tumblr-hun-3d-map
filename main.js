@@ -181,6 +181,12 @@ function runZoom() {
 
 runZoom();
 
+// Firefox mobile doesn't load in full screen, need the following to force it to load properly
+if (/Mozilla.+Android.+Mobile.+Firefox\//.test(navigator.userAgent)) {
+  Graph.width(document.body.clientWidth);
+  Graph.height(document.body.clientHeight);
+}
+
 function onNodeClick(node) {
   const distance = 100;
   const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
