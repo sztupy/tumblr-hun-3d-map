@@ -196,8 +196,6 @@ if (controlType == "fly") {
   document.getElementById("control").style.display = "block";
 
   document.getElementById("control-fly").addEventListener('input',function(event) {
-    console.log("X", event.target.value);
-
     if (event.target.value != 0) {
       Graph.controls().autoForward = true;
       Graph.controls().movementSpeed = event.target.value * 10;
@@ -211,20 +209,19 @@ if (controlType == "fly") {
   });
 
   document.getElementById("control-fly").addEventListener('change', function(event) {
-    console.log(event.target.value);
-    if (Math.abs(event.target.value)<20) {
-      console.log(event.target.value);
-
-      event.target.value = 0;
-      Graph.controls().autoForward = false;
-      Graph.controls().movementSpeed = 300;
-      Graph.controls().updateMovementVector();
-      console.log(event.target.value);
-    }
+    event.target.value = 0;
+    Graph.controls().autoForward = false;
+    Graph.controls().movementSpeed = 300;
+    Graph.controls().updateMovementVector();
   });
-
 }
 
+var hasTouch;
+window.addEventListener('touchstart', function setHasTouch () {
+    hasTouch = true;
+    Graph.controls().dragToLook = false;
+    window.removeEventListener('touchstart', setHasTouch);
+}, false);
 
 const ForceLink = Graph
   .d3Force('link')
