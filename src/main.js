@@ -114,10 +114,11 @@ for (let blog of availableBlogs) {
   const child = document.createElement("a");
   child.href="#";
   child.textContent = blog.name;
-  child.onclick = () => {
+  child.onclick = (event) => {
     onNodeClick(blog.id);
     searchBox.style.display = "none";
     searchBoxOpener.style.display = "block";
+    event.preventDefault();
   }
   searchBox.appendChild(child);
 }
