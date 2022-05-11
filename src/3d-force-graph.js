@@ -54336,11 +54336,13 @@ function InsertStackElement(node, body) {
 
   			this.domElement.removeEventListener( 'contextmenu', contextmenu );
   			this.domElement.removeEventListener( 'mousedown', _mousedown );
-			this.domElement.removeEventListener( 'touchdown', _mousemove );
-  			this.domElement.removeEventListener( 'mousemove', _mousemove );
+			this.domElement.removeEventListener( 'mousemove', _mousemove );
+			this.domElement.removeEventListener( 'mouseup', _mouseup );
+
+			this.domElement.removeEventListener( 'touchstart', _mousedown );
 			this.domElement.removeEventListener( 'touchmove', _mousemove );
-  			this.domElement.removeEventListener( 'mouseup', _mouseup );
-			this.domElement.removeEventListener( 'touchup', _mousemove );
+			this.domElement.removeEventListener( 'touchend', _mouseup );
+			this.domElement.removeEventListener( 'touchcancel', _mouseup );
 
   			window.removeEventListener( 'keydown', _keydown );
   			window.removeEventListener( 'keyup', _keyup );
@@ -54356,8 +54358,9 @@ function InsertStackElement(node, body) {
   		this.domElement.addEventListener( 'contextmenu', contextmenu );
 
 		this.domElement.addEventListener( 'touchmove', _mousemove );
-		this.domElement.addEventListener( 'touchdown', _mousedown );
-		this.domElement.addEventListener( 'touchup', _mouseup );
+		this.domElement.addEventListener( 'touchstart', _mousedown );
+		this.domElement.addEventListener( 'touchend', _mouseup );
+		this.domElement.addEventListener( 'touchcancel', _mouseup );
 
   		this.domElement.addEventListener( 'mousemove', _mousemove );
   		this.domElement.addEventListener( 'mousedown', _mousedown );
@@ -56983,7 +56986,7 @@ function InsertStackElement(node, body) {
       state.navInfo.textContent = {
         orbit: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
         trackball: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
-        fly: 'WASD: move, R|F: up | down, Q|E: roll, up|down: pitch, left|right: yaw'
+        fly: 'WASD, RF, QE: move&roll, Arrows: pitch&yaw, Touch: rotate, Multi-touch: forward'
       }[controlType] || '';
       state.navInfo.style.display = state.showNavInfo ? null : 'none'; // Setup tooltip
 
