@@ -54207,14 +54207,10 @@ function InsertStackElement(node, body) {
   				this.updateMovementVector();
 
   			}
-			console.log(event);
-			console.log(this.mouseStatus);
 
   		};
 
   		this.mousemove = function ( event ) {
-			console.log(event);
-			console.log(this.mouseStatus);
 
   			if ( ! this.dragToLook || this.mouseStatus > 0 ) {
 
@@ -54262,8 +54258,6 @@ function InsertStackElement(node, body) {
   			}
 
   			this.updateRotationVector();
-			console.log(event);
-			console.log(this.mouseStatus);
 
   		};
 
@@ -56996,6 +56990,7 @@ function InsertStackElement(node, body) {
       state.toolTipElem.classList.add('scene-tooltip');
       state.container.appendChild(state.toolTipElem); // Capture pointer coords on move or touchstart
 
+	  state.pointerCount = 0;
       state.pointerPos = new three$1.Vector2();
       state.pointerPos.x = -2; // Initialize off canvas
 
@@ -57004,6 +56999,7 @@ function InsertStackElement(node, body) {
         return state.container.addEventListener(evType, function (ev) {
           // track click state
           evType === 'pointerdown' && (state.isPointerPressed = true); // detect point drag
+		  evType === 'pointerdown' && (state.pointerCount += 1); // detect point drag
 
           !state.isPointerDragging && ev.type === 'pointermove' && (ev.pressure > 0 || state.isPointerPressed) // ev.pressure always 0 on Safari, so we used the isPointerPressed tracker
           && (ev.movementX === undefined || [ev.movementX, ev.movementY].some(function (m) {
@@ -57036,30 +57032,40 @@ function InsertStackElement(node, body) {
         });
       }); // Handle click events on objs
 
-      state.container.addEventListener('pointerup', function (ev) {
-        state.isPointerPressed = false;
+	  ['pointerleave', 'pointerup', 'pointercancel'].forEach(function (evType) {
+		state.container.addEventListener(evType, function (ev) {
+			state.pointerCount -= 1;
+			if (state.pointerCount < 0) {
+				state.pointerCount = 0;
+			}
+			state.isPointerPressed = false;
 
-        if (state.isPointerDragging) {
-          state.isPointerDragging = false;
-          if (!state.clickAfterDrag) return; // don't trigger onClick after pointer drag (camera motion via controls)
-        }
+			console.log(state.pointerCount);
 
-        requestAnimationFrame(function () {
-          // trigger click events asynchronously, to allow hoverObj to be set (on frame)
-          if (ev.button === 0) {
-            // left-click
-            state.onClick(state.hoverObj || null, ev, state.intersectionPoint); // trigger background clicks with null
-          }
+			if (state.pointerCount != 0) return; // only trigger click event if all fingers have been released
 
-          if (ev.button === 2 && state.onRightClick) {
-            // right-click
-            state.onRightClick(state.hoverObj || null, ev, state.intersectionPoint);
-          }
-        });
-      }, {
-        passive: true,
-        capture: true
-      }); // use capture phase to prevent propagation blocking from controls (specifically for fly)
+			if (state.isPointerDragging) {
+				state.isPointerDragging = false;
+				if (!state.clickAfterDrag) return; // don't trigger onClick after pointer drag (camera motion via controls)
+			}
+
+			requestAnimationFrame(function () {
+			// trigger click events asynchronously, to allow hoverObj to be set (on frame)
+			if (ev.button === 0) {
+				// left-click
+				state.onClick(state.hoverObj || null, ev, state.intersectionPoint); // trigger background clicks with null
+			}
+
+			if (ev.button === 2 && state.onRightClick) {
+				// right-click
+				state.onRightClick(state.hoverObj || null, ev, state.intersectionPoint);
+			}
+			});
+		}, {
+			passive: true,
+			capture: true
+		}); // use capture phase to prevent propagation blocking from controls (specifically for fly)
+	  });
 
       state.container.addEventListener('contextmenu', function (ev) {
         if (state.onRightClick) ev.preventDefault(); // prevent default contextmenu behavior and allow pointerup to fire instead
