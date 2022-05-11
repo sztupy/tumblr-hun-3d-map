@@ -57003,7 +57003,7 @@ function InsertStackElement(node, body) {
 
           !state.isPointerDragging && ev.type === 'pointermove' && (ev.pressure > 0 || state.isPointerPressed) // ev.pressure always 0 on Safari, so we used the isPointerPressed tracker
           && (ev.movementX === undefined || [ev.movementX, ev.movementY].some(function (m) {
-            return Math.abs(m) > 5;
+            return Math.abs(m) > 2;
           })) // relax drag trigger sensitivity on touch events
           && (state.isPointerDragging = true);
 
@@ -57032,15 +57032,13 @@ function InsertStackElement(node, body) {
         });
       }); // Handle click events on objs
 
-	  ['pointerleave', 'pointerup', 'pointercancel'].forEach(function (evType) {
+	  ['pointerup', 'pointercancel'].forEach(function (evType) {
 		state.container.addEventListener(evType, function (ev) {
 			state.pointerCount -= 1;
-			if (state.pointerCount < 0) {
+			if (state.pointerCount <= 0) {
 				state.pointerCount = 0;
 				state.isPointerPressed = false;
 			}
-
-			console.log(state.pointerCount);
 
 			if (state.pointerCount != 0) return; // only trigger click event if all fingers have been released
 
