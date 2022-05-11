@@ -54193,6 +54193,7 @@ function InsertStackElement(node, body) {
 					this.moveState.back = 1;
 					this.moveState.forward = 0;
 				}
+				this.updateMovementVector();
 
   			} else {
 
@@ -54246,6 +54247,7 @@ function InsertStackElement(node, body) {
 					this.moveState.forward = 0;
 					this.moveState.back = 0;
 				}
+				this.updateMovementVector();
   			} else {
 
   				switch ( event.button ) {
@@ -56986,7 +56988,7 @@ function InsertStackElement(node, body) {
       state.navInfo.textContent = {
         orbit: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
         trackball: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
-        fly: 'WASD, RF, QE: move&roll, Arrows: pitch&yaw, Touch: rotate, Multi-touch: forward'
+        fly: 'WASD/RF/QE: move/roll, Arrows: pitch/yaw, Touch: rotate, Multi-touch: forward'
       }[controlType] || '';
       state.navInfo.style.display = state.showNavInfo ? null : 'none'; // Setup tooltip
 

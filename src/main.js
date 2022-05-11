@@ -306,29 +306,6 @@ if (dag) {
   Graph.dagMode(dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
 }
 
-if (controlType == "fly") {
-  document.getElementById("control").style.display = "block";
-
-  document.getElementById("control-fly").addEventListener('input',function(event) {
-    if (event.target.value != 0) {
-      Graph.controls().autoForward = true;
-      Graph.controls().movementSpeed = event.target.value * 10;
-      Graph.controls().updateMovementVector();
-    } else {
-      Graph.controls().autoForward = false;
-      Graph.controls().movementSpeed = 300;
-      Graph.controls().updateMovementVector();
-    }
-    autoFocus = false;
-  });
-
-  document.getElementById("control-fly").addEventListener('change', function(event) {
-    event.target.value = 0;
-    Graph.controls().autoForward = false;
-    Graph.controls().movementSpeed = 300;
-    Graph.controls().updateMovementVector();
-  });
-}
 window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
 window.addEventListener('pointerdown', function () { autoFocus = false; }, { passive: true });
 window.addEventListener('wheel', function (event) { if (Math.abs(event.deltaY)>1 || Math.abs(event.deltaX)>1) autoFocus = false; }, { passive: true });

@@ -12,18 +12,6 @@
         color: black !important;
         border: 1px solid black;
       }
-      #control {
-        position: absolute;
-        z-index: 1;
-        bottom: 0;
-        left: 0;
-        display: none;
-      }
-      #control-fly {
-        margin: 1em;
-        writing-mode: bt-lr; /* IE */
-        -webkit-appearance: slider-vertical; /* Chromium */
-      }
       #search-open {
         position: absolute;
         top: 0.2em;
@@ -61,7 +49,6 @@
     <script src="src/data.js"></script>
   </head>
   <body>
-    <div id="control"><input id="control-fly" type="range" orient="vertical" min="-20" max="100" value="0" autocomplete="off"></div>
     <div id="search">
       <div id="search-open">🔎</div>
       <div id="search-values"></div>
