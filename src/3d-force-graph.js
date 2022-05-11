@@ -50801,6 +50801,7 @@ function InsertStackElement(node, body) {
       return graph[idAccessor(node)] = {
         data: node,
         out: [],
+        in: [],
         depth: -1,
         skip: !nodeFilter(node)
       };
@@ -50815,13 +50816,26 @@ function InsertStackElement(node, body) {
       var sourceNode = graph[sourceId];
       var targetNode = graph[targetId];
       sourceNode.out.push(targetNode);
+      targetNode.in.push(sourceNode);
 
       function getNodeId(node) {
         return _typeof(node) === 'object' ? idAccessor(node) : node;
       }
     });
     var foundLoops = [];
+    var maxDepth = 0;
     traverse(Object.values(graph));
+    for (var depth = maxDepth; depth>0; depth--) {
+      for (var nodeId in graph) {
+        var node = graph[nodeId];
+        if (node.depth == depth) {
+          for (var inNode of node.in) {
+            inNode.depth = depth - 1;
+          }
+        }
+      }
+    }
+
     var nodeDepths = Object.assign.apply(Object, [{}].concat(_toConsumableArray$1(Object.entries(graph).filter(function (_ref4) {
       var _ref5 = _slicedToArray$1(_ref4, 2),
           node = _ref5[1];
@@ -50867,6 +50881,8 @@ function InsertStackElement(node, body) {
         if (currentDepth > node.depth) {
           // Don't unnecessarily revisit chunks of the graph
           node.depth = currentDepth;
+          if (maxDepth < currentDepth)
+            maxDepth = currentDepth;
           traverse(node.out, [].concat(_toConsumableArray$1(nodeStack), [node]), currentDepth + (node.skip ? 0 : 1));
         }
       }
