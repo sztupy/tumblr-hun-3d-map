@@ -173,8 +173,8 @@ function addToSystem(focusBlogId) {
 
       let destinationNode = nodeData.find(node => node.id == destination);
       if (!destinationNode) {
-        destinationNode = { id: destination, name: tumblrData.nodes[source], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z};
-        console.log("New Destination Node", sourceNode);
+        destinationNode = { id: destination, name: tumblrData.nodes[destination], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z};
+        console.log("New Destination Node", destinationNode);
         nodeData.push(destinationNode);
         changed = true;
       }
