@@ -54179,7 +54179,6 @@ function InsertStackElement(node, body) {
   		};
 
   		this.mousedown = function ( event ) {
-
   			if ( this.dragToLook ) {
 
   				this.mouseStatus ++;
@@ -54207,11 +54206,14 @@ function InsertStackElement(node, body) {
   				this.updateMovementVector();
 
   			}
+			console.log(event);
+			console.log(this.mouseStatus);
 
   		};
 
   		this.mousemove = function ( event ) {
 			console.log(event);
+			console.log(this.mouseStatus);
 
   			if ( ! this.dragToLook || this.mouseStatus > 0 ) {
 
@@ -54229,12 +54231,11 @@ function InsertStackElement(node, body) {
   		};
 
   		this.mouseup = function ( event ) {
-
   			if ( this.dragToLook ) {
 
   				this.mouseStatus --;
 
-				if (this.mouseState == 0) {
+				if (this.mouseStatus == 0) {
   					this.moveState.yawLeft = this.moveState.pitchDown = 0;
 				}
 
@@ -54259,6 +54260,8 @@ function InsertStackElement(node, body) {
   			}
 
   			this.updateRotationVector();
+			console.log(event);
+			console.log(this.mouseStatus);
 
   		};
 
