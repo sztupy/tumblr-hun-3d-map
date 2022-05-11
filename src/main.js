@@ -52,55 +52,58 @@ if (window.location.search || window.location.hash) {
 }
 
 const linkData = [];
+const availableBlogIds = new Set();
 let maxMaxValue = 0;
 let yearData = tumblrData.years[valuesToLoad];
+
 for (var sourceBlog in yearData) {
   let sourceData = yearData[sourceBlog];
   let maxValue = 0;
+  let maxDestination = null;
+  availableBlogIds.add(parseInt(sourceBlog));
   for (var destinationBlog in sourceData) {
     let destinationData = sourceData[destinationBlog];
-    if (destinationData[1] > maxValue) {
+    availableBlogIds.add(parseInt(destinationBlog));
+    if (destinationData[1] > maxValue && destinationData[1] >= valuesToLimit) {
       maxValue = destinationData[1];
+      maxDestination = destinationBlog;
     }
   }
-  if (maxValue < valuesToLimit) {
-    maxValue = 0;
-  }
 
-  if (maxValue != 0) {
-    for (var destinationBlog in sourceData) {
-      let destinationData = sourceData[destinationBlog];
-      const source = parseInt(sourceBlog);
-      const destination = parseInt(destinationBlog);
+  if (maxDestination) {
+    let destinationBlog = maxDestination;
+    let destinationData = sourceData[destinationBlog];
+    const source = parseInt(sourceBlog);
+    const destination = parseInt(destinationBlog);
 
-      if ( destinationData[1] == maxValue ) {
-        present[source] ||= 1;
-        present[destination] ||= 1;
+    present[source] ||= 1;
+    present[destination] ||= 1;
 
-        if (present[destination] < maxValue) {
-          present[destination] = maxValue;
-          if (maxMaxValue < maxValue) {
-            maxMaxValue = maxValue;
-          }
-        }
-
-        if (dag) {
-          const original = linkData.find(link => link.source == destination && link.target == source);
-          if (original) {
-            original.linkDirection = 'both';
-          } else {
-            linkData.push({ source: source, target: destination, distance: (1/destinationData[0])* 30, data: destinationData});
-          }
-        } else {
-          linkData.push({ source: source, target: destination, distance: (1/destinationData[0])* 30, data: destinationData});
-        }
-        break;
+    if (present[destination] < maxValue) {
+      present[destination] = maxValue;
+      if (maxMaxValue < maxValue) {
+        maxMaxValue = maxValue;
       }
+    }
+
+    if (dag) {
+      const original = linkData.find(link => link.source == destination && link.target == source);
+      if (original) {
+        original.linkDirection = 'both';
+      } else {
+        linkData.push({ source: source, target: destination, distance: (1/destinationData[0])* 30, data: destinationData});
+      }
+    } else {
+      linkData.push({ source: source, target: destination, distance: (1/destinationData[0])* 30, data: destinationData});
     }
   }
 }
 
 const nodeData = tumblrData.nodes.map((name, idx) => ({ id: idx, name: name, val: present[idx] || 1 })).filter(data => present[data.id]);
+
+const availableBlogs = Array.from(availableBlogIds).map(id => tumblrData.nodes[id]).sort();
+
+console.log(availableBlogs);
 
 const initData = {
   nodes: nodeData,
@@ -110,79 +113,76 @@ const initData = {
 
 function addToSystem(focusBlogId) {
   let changed = false;
+  const focusBlog = initData.nodes.find(node => node.id == focusBlogId);
   for (var sourceBlog in yearData) {
     const sourceData = yearData[sourceBlog];
-    let maxValue = 0;
-
     const source = parseInt(sourceBlog);
 
+    let maxValue = 0;
+    let maxDestination = null;
+
     for (var destinationBlog in sourceData) {
-      const destination = parseInt(destinationBlog);
-      if (destination === focusBlogId) {
-        const destinationData = sourceData[destinationBlog];
-        if (destinationData[1] > maxValue) {
-          maxValue = destinationData[1];
-          if (maxMaxValue < maxValue) {
-            maxMaxValue = maxValue;
-          }
+      const destinationData = sourceData[destinationBlog];
+      if (destinationData[1] > maxValue) {
+        maxValue = destinationData[1];
+        maxDestination = destinationBlog;
+        if (maxMaxValue < maxValue) {
+          maxMaxValue = maxValue;
         }
       }
     }
 
-    if (maxValue != 0) {
-      for (var destinationBlog in sourceData) {
-        const destinationData = sourceData[destinationBlog];
-        const destination = parseInt(destinationBlog);
-        if (destination !== focusBlogId) {
-          continue;
+    if (maxDestination) {
+      const destinationBlog = maxDestination;
+      const destinationData = sourceData[destinationBlog];
+      const destination = parseInt(destinationBlog);
+      if (destination !== focusBlogId && source !== focusBlogId) {
+        continue;
+      }
+
+      let sourceNode = nodeData.find(node => node.id == source);
+      if (!sourceNode) {
+        sourceNode = { id: source, name: tumblrData.nodes[source], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z };
+        console.log("New Source Node", sourceNode);
+        nodeData.push(sourceNode);
+        changed = true;
+      }
+
+      let destinationNode = nodeData.find(node => node.id == destination);
+      if (!destinationNode) {
+        destinationNode = { id: destination, name: tumblrData.nodes[source], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z};
+        console.log("New Destination Node", sourceNode);
+        nodeData.push(destinationNode);
+        changed = true;
+      }
+
+      if (destinationNode.value < maxValue) {
+        destinationNode.value = maxValue;
+        destinationNode.spriteNormal = null;
+        destinationNode.spriteSelected = null;
+      }
+
+      if (linkData.find(link => link.source.id == source && link.target.id == destination)) {
+        continue;
+      };
+
+      let newLink = null;
+      if (dag) {
+        const original = linkData.find(link => link.source.id == destination && link.target.id == source);
+        if (original) {
+          original.linkDirection = 'both';
+          changed = true;
+        } else {
+          newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData};
         }
-        if ( destinationData[1] == maxValue ) {
-          let sourceNode = nodeData.find(node => node.id == source);
-          if (!sourceNode) {
-            sourceNode = { id: source, name: tumblrData.nodes[source], value: 1};
-            console.log("New Source Node", sourceNode);
-            nodeData.push(sourceNode);
-            changed = true;
-          }
+      } else {
+        newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData };
+      }
 
-          let destinationNode = nodeData.find(node => node.id == destination);
-          if (!destinationNode) {
-            destinationNode = { id: destination, name: tumblrData.nodes[source], value: 1};
-            console.log("New Destination Node", sourceNode);
-            nodeData.push(destinationNode);
-            changed = true;
-          }
-
-          if (destinationNode.value < maxValue) {
-            destinationNode.value = maxValue;
-            destinationNode.spriteWhite = null;
-            destinationNode.spriteGreen = null;
-          }
-
-          if (linkData.find(link => link.source.id == source && link.target.id == destination)) {
-            break;
-          };
-
-          let newLink = null;
-          if (dag) {
-            const original = linkData.find(link => link.source.id == destination && link.target.id == source);
-            if (original) {
-              original.linkDirection = 'both';
-              changed = true;
-            } else {
-              newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData};
-            }
-          } else {
-            newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData };
-          }
-
-          if (newLink) {
-            console.log("New Link", newLink);
-            linkData.push(newLink);
-            changed = true;
-          }
-          break;
-        }
+      if (newLink) {
+        console.log("New Link", newLink);
+        linkData.push(newLink);
+        changed = true;
       }
     }
   }
@@ -192,6 +192,8 @@ function addToSystem(focusBlogId) {
   } else {
     console.log("No changes detected");
   }
+
+  return changed;
 }
 
 function fillNeighbours() {
@@ -242,7 +244,7 @@ const Graph = ForceGraph3D({ controlType: controlType })(elem)
       return 'rgba(255,255,255,0.2)';
   })
   .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
-  .linkWidth(link => highlightLinks.has(link) ? 5 : 0)
+  .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 4 : 0)
   .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
   .linkDirectionalParticleWidth(0.5)
   .linkOpacity(1)
@@ -250,31 +252,31 @@ const Graph = ForceGraph3D({ controlType: controlType })(elem)
   .nodeLabel(node => node.name)
   .numDimensions(dimensions)
   .nodeThreeObject(node => {
-    if (!node.spriteWhite && (displayType=='labels' || hightlightNodes.has(node))) {
+    if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
       let sprite = new SpriteText(node.name);
       sprite.backgroundColor = "white";
       sprite.color = "black";
-      sprite.textHeight = 5 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+      sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
       sprite.padding = 0.5;
       sprite.borderWidth = 0.2;
       sprite.borderColor = "black";
 
-      node.spriteWhite = sprite;
+      node.spriteNormal = sprite;
     }
 
-    if (!node.spriteGreen && (displayType == 'labels' && hightlightNodes.has(node))) {
+    if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
       sprite = new SpriteText(node.name);
       sprite.backgroundColor = "green";
       sprite.color = "black";
-      sprite.textHeight = 5 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+      sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
       sprite.padding = 0.5;
       sprite.borderWidth = 0.2;
       sprite.borderColor = "black";
 
-      node.spriteGreen = sprite;
+      node.spriteSelected = sprite;
     }
 
-    return hightlightNodes.has(node) ? (displayType == 'labels' ? node.spriteGreen : node.spriteWhite ) : (displayType == 'labels' ? node.spriteWhite : false);
+    return hightlightNodes.has(node) ? (displayType == 'labels' ? node.spriteSelected : node.spriteNormal ) : (displayType == 'labels' ? node.spriteNormal : false);
   })
   .onNodeClick(node => onNodeClick(node))
   .onLinkClick(link => onNodeClick(link.source))
@@ -315,8 +317,9 @@ window.addEventListener('touchstart', function setHasTouch () {
     window.removeEventListener('touchstart', setHasTouch);
 }, false);
 
-window.addEventListener('keydown', function () { stopped = true; }, { once: true });
-window.addEventListener('pointerdown', function () { stopped = true; }, { once: true });
+window.addEventListener('keydown', function () { stopped = true; }, { passive: true });
+window.addEventListener('pointerdown', function () { stopped = true; }, { passive: true });
+window.addEventListener('wheel', function () { stopped = true; }, { passive: true });
 
 const ForceLink = Graph
   .d3Force('link')
@@ -354,8 +357,13 @@ function onNodeClick(node) {
     node.z = 0;
   }
 
+  let nodeAdded = false;
+  if (node && hoverNode === node) {
+    nodeAdded = addToSystem(node.id);
+  }
+
   if (controlType != 'fly' || !node.z) {
-    const distance = 1000;
+    const distance = Math.sqrt(Math.sqrt(node.val)) / Math.sqrt(Math.sqrt(maxMaxValue)) * 500;
     const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
 
     const newPos = node.z
@@ -364,31 +372,28 @@ function onNodeClick(node) {
 
     Graph.cameraPosition(newPos, node, 1500);
 
-    if (controlType == 'fly') {
-      setTimeout(() => {
-        Graph.cameraPosition(newPos, node, 500);
-      },1500);
+    if (nodeAdded) {
+      stopped = false;
+      setTimeout(function() {
+        if (stopped) return;
+        stopped = true;
+        const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
+
+        const newPos = node.z
+          ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
+          : { x: node.x, y: node.y, z: distance }; // special case if node is on the plane for 2D graphs
+
+        Graph.cameraPosition(newPos, node, 1500);
+      }, 1600);
     }
   } else {
     const distance = 1000;
     const currentPostiion = Graph.cameraPosition();
     const newPos = { }
-
-
-
-    // Graph.cameraPosition(
-    //   Graph.cameraPosition(),
-    //   node,
-    //   1500
-    // );
-
-
   }
 
-  if (node && hoverNode === node) {
-    addToSystem(node.id);
-  }
-  if ((!node && !highlightLinks.size) || (node && hoverNode === node)) return;
+  if (!node && !highlightLinks.size) return;
+  if (node && hoverNode === node && !nodeAdded) return;
 
   hightlightNodes.clear();
   highlightLinks.clear();
