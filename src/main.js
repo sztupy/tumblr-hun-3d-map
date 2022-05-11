@@ -247,64 +247,69 @@ const hightlightNodes = new Set();
 let hoverNode = null;
 
 const Graph = ForceGraph3D({ controlType: controlType })(elem)
-  .enableNodeDrag(false)
-  .linkColor(link => {
-      if (link.linkDirection == 'both') {
-        return 'rgba(255,0,0,0.2)';
-      }
-      if (highlightLinks.has(link)) {
-        if (highlightLinksBoth.has(link)) {
-          return 'rgba(255,0,0,0.8)';
+
+window.onload = function() {
+  Graph.enableNodeDrag(false)
+    .linkColor(link => {
+        if (link.linkDirection == 'both') {
+          return 'rgba(255,0,0,0.2)';
         }
-        if (highlightLinksTo.has(link)) {
-          return 'rgba(255,255,0,0.5)';
+        if (highlightLinks.has(link)) {
+          if (highlightLinksBoth.has(link)) {
+            return 'rgba(255,0,0,0.8)';
+          }
+          if (highlightLinksTo.has(link)) {
+            return 'rgba(255,255,0,0.5)';
+          }
+          return 'rgba(0,255,0,0.5)';
         }
-        return 'rgba(0,255,0,0.5)';
+        return 'rgba(255,255,255,0.2)';
+    })
+    .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
+    .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
+    .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
+    .linkDirectionalParticleWidth(0.5)
+    .linkOpacity(1)
+    .nodeResolution(1)
+    .nodeLabel(node => node.name)
+    .numDimensions(dimensions)
+    .nodeThreeObject(node => {
+      if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
+        let sprite = new SpriteText(node.name);
+        sprite.backgroundColor = "white";
+        sprite.color = "black";
+        sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+        sprite.padding = 0.5;
+        sprite.borderWidth = 0.2;
+        sprite.borderColor = "black";
+
+        node.spriteNormal = sprite;
       }
-      return 'rgba(255,255,255,0.2)';
-  })
-  .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
-  .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
-  .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
-  .linkDirectionalParticleWidth(0.5)
-  .linkOpacity(1)
-  .nodeResolution(1)
-  .nodeLabel(node => node.name)
-  .numDimensions(dimensions)
-  .nodeThreeObject(node => {
-    if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
-      let sprite = new SpriteText(node.name);
-      sprite.backgroundColor = "white";
-      sprite.color = "black";
-      sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
-      sprite.padding = 0.5;
-      sprite.borderWidth = 0.2;
-      sprite.borderColor = "black";
 
-      node.spriteNormal = sprite;
-    }
+      if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
+        sprite = new SpriteText(node.name);
+        sprite.backgroundColor = "green";
+        sprite.color = "black";
+        sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+        sprite.padding = 0.5;
+        sprite.borderWidth = 0.2;
+        sprite.borderColor = "black";
 
-    if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
-      sprite = new SpriteText(node.name);
-      sprite.backgroundColor = "green";
-      sprite.color = "black";
-      sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
-      sprite.padding = 0.5;
-      sprite.borderWidth = 0.2;
-      sprite.borderColor = "black";
+        node.spriteSelected = sprite;
+      }
 
-      node.spriteSelected = sprite;
-    }
+      return hightlightNodes.has(node) ? (displayType == 'labels' ? node.spriteSelected : node.spriteNormal ) : (displayType == 'labels' ? node.spriteNormal : false);
+    })
+    .onNodeClick(node => onNodeClick(node))
+    .onLinkClick(link => onNodeClick(link.source))
+    .graphData(initData);
 
-    return hightlightNodes.has(node) ? (displayType == 'labels' ? node.spriteSelected : node.spriteNormal ) : (displayType == 'labels' ? node.spriteNormal : false);
-  })
-  .onNodeClick(node => onNodeClick(node))
-  .onLinkClick(link => onNodeClick(link.source))
-  .graphData(initData);
-
-if (dag) {
-  Graph.dagMode(dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
-}
+  if (dag) {
+    Graph.dagMode(dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
+  }
+  setTimeout(function() { document.getElementById("loading").style.opacity = "0";},1);
+  setTimeout(function() { document.getElementById("loading").style.display = "none";},1100);
+};
 
 window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
 window.addEventListener('pointerdown', function () { autoFocus = false; }, { passive: true });
