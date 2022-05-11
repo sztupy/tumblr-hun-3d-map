@@ -324,7 +324,7 @@ if (controlType == "fly") {
       Graph.controls().movementSpeed = 300;
       Graph.controls().updateMovementVector();
     }
-    stopped = true;
+    autoFocus = true;
   });
 
   document.getElementById("control-fly").addEventListener('change', function(event) {
@@ -338,13 +338,13 @@ if (controlType == "fly") {
 var hasTouch;
 window.addEventListener('touchstart', function setHasTouch () {
     hasTouch = true;
-    stopped = true;
+    autoFocus = false;
     window.removeEventListener('touchstart', setHasTouch);
 }, false);
 
-window.addEventListener('keydown', function () { stopped = true; }, { passive: true });
-window.addEventListener('pointerdown', function () { stopped = true; }, { passive: true });
-window.addEventListener('wheel', function () { stopped = true; }, { passive: true });
+window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
+window.addEventListener('pointerdown', function () { autoFocus = false; }, { passive: true });
+window.addEventListener('wheel', function () { autoFocus = false; }, { passive: true });
 
 const ForceLink = Graph
   .d3Force('link')
@@ -356,13 +356,33 @@ const ForceCharge = Graph
 
 const ForceCenter = Graph.d3Force('center').strength(0.01);
 
-let stopped = false;
-Graph.onEngineStop(() => stopped = true);
+let autoFocus = 'all';
+Graph.onEngineStop(() => autoFocus = false);
+
+function zoomTo(node, speed = 1000) {
+  const distance = Math.sqrt(Math.sqrt(node.val)) / Math.sqrt(Math.sqrt(maxMaxValue)) * 500;
+  const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
+
+  const newPos = node.z
+    ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
+    : { x: node.x, y: node.y, z: distance }; // special case if node is on the plane for 2D graphs
+
+  Graph.cameraPosition(newPos, node, speed);
+}
 
 function runZoom() {
-  if (!stopped) {
+  if (autoFocus == 'all') {
     Graph.zoomToFit(400);
     setTimeout(runZoom, 1000);
+  } else if (Number.isInteger(autoFocus)) {
+    const node = nodeData.find(n => n.id == autoFocus);
+    if (node) {
+      zoomTo(node, 1000);
+    }
+
+    setTimeout(runZoom, 1500);
+  } else {
+    setTimeout(runZoom, 500);
   }
 }
 
@@ -398,33 +418,9 @@ function onNodeClick(node) {
   }
 
   if (controlType != 'fly' || !node.z) {
-    const distance = Math.sqrt(Math.sqrt(node.val)) / Math.sqrt(Math.sqrt(maxMaxValue)) * 500;
-    const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
-
-    const newPos = node.z
-      ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
-      : { x: node.x, y: node.y, z: distance }; // special case if node is on the plane for 2D graphs
-
-    Graph.cameraPosition(newPos, node, 1500);
-
-    if (nodeAdded) {
-      stopped = false;
-      setTimeout(function() {
-        if (stopped) return;
-        stopped = true;
-        const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
-
-        const newPos = node.z
-          ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
-          : { x: node.x, y: node.y, z: distance }; // special case if node is on the plane for 2D graphs
-
-        Graph.cameraPosition(newPos, node, 1500);
-      }, 1600);
-    }
+    zoomTo(node, 1000);
+    autoFocus = node.id;
   } else {
-    const distance = 1000;
-    const currentPostiion = Graph.cameraPosition();
-    const newPos = { }
   }
 
   if (!node && !highlightLinks.size) return;
