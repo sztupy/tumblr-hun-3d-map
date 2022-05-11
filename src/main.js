@@ -133,7 +133,6 @@ function addToSystem(focusBlogId) {
   let focusBlog = initData.nodes.find(node => node.id == focusBlogId);
   if (!focusBlog) {
     focusBlog = { id: focusBlogId, name: tumblrData.nodes[focusBlogId], val: 1, x: 1, y: 1, z: 0, neighborsTo: new Set(), neighborsFrom: new Set(), links: new Set() };
-    console.log("New Focus Node", focusBlog);
     nodeData.push(focusBlog);
     changed = true;
   }
@@ -166,7 +165,6 @@ function addToSystem(focusBlogId) {
       let sourceNode = nodeData.find(node => node.id == source);
       if (!sourceNode) {
         sourceNode = { id: source, name: tumblrData.nodes[source], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z };
-        console.log("New Source Node", sourceNode);
         nodeData.push(sourceNode);
         changed = true;
       }
@@ -174,7 +172,6 @@ function addToSystem(focusBlogId) {
       let destinationNode = nodeData.find(node => node.id == destination);
       if (!destinationNode) {
         destinationNode = { id: destination, name: tumblrData.nodes[destination], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z};
-        console.log("New Destination Node", destinationNode);
         nodeData.push(destinationNode);
         changed = true;
       }
@@ -205,7 +202,6 @@ function addToSystem(focusBlogId) {
       }
 
       if (newLink) {
-        console.log("New Link", newLink);
         linkData.push(newLink);
         changed = true;
       }
@@ -214,8 +210,6 @@ function addToSystem(focusBlogId) {
   if (changed) {
     fillNeighbours();
     Graph.graphData(initData);
-  } else {
-    console.log("No changes detected");
   }
 
   return changed;
@@ -324,7 +318,7 @@ if (controlType == "fly") {
       Graph.controls().movementSpeed = 300;
       Graph.controls().updateMovementVector();
     }
-    autoFocus = true;
+    autoFocus = false;
   });
 
   document.getElementById("control-fly").addEventListener('change', function(event) {
@@ -334,17 +328,9 @@ if (controlType == "fly") {
     Graph.controls().updateMovementVector();
   });
 }
-
-var hasTouch;
-window.addEventListener('touchstart', function setHasTouch () {
-    hasTouch = true;
-    autoFocus = false;
-    window.removeEventListener('touchstart', setHasTouch);
-}, false);
-
 window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
 window.addEventListener('pointerdown', function () { autoFocus = false; }, { passive: true });
-window.addEventListener('wheel', function () { autoFocus = false; }, { passive: true });
+window.addEventListener('wheel', function (event) { if (Math.abs(event.deltaY)>1 || Math.abs(event.deltaX)>1) autoFocus = false; }, { passive: true });
 
 const ForceLink = Graph
   .d3Force('link')
@@ -357,7 +343,6 @@ const ForceCharge = Graph
 const ForceCenter = Graph.d3Force('center').strength(0.01);
 
 let autoFocus = 'all';
-Graph.onEngineStop(() => autoFocus = false);
 
 function zoomTo(node, speed = 1000) {
   const distance = Math.sqrt(Math.sqrt(node.val)) / Math.sqrt(Math.sqrt(maxMaxValue)) * 500;
@@ -397,6 +382,11 @@ Graph.onEngineTick(function() {
   Graph.onEngineTick(function(){});
 });
 
+window.addEventListener('resize', function() {
+  Graph.width(document.body.clientWidth);
+  Graph.height(document.body.clientHeight);
+});
+
 function onNodeClick(node) {
   let nodeAdded = false;
   if (Number.isInteger(node)) {
@@ -417,11 +407,8 @@ function onNodeClick(node) {
     node.z = 0;
   }
 
-  if (controlType != 'fly' || !node.z) {
-    zoomTo(node, 1000);
-    autoFocus = node.id;
-  } else {
-  }
+  zoomTo(node, 1000);
+  autoFocus = node.id;
 
   if (!node && !highlightLinks.size) return;
   if (node && hoverNode === node && !nodeAdded) return;
