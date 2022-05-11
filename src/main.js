@@ -3,6 +3,7 @@ const present = {};
 let controlType = 'trackball';
 let displayType = 'labels';
 let valuesToLoad = 'all';
+let labelLoadPerTick = 10000000;
 let valuesToLimit = 0;
 let dimensions = 3;
 let dag = false;
@@ -19,8 +20,13 @@ if (window.location.search || window.location.hash) {
 
   if (search.indexOf('labels') != -1) {
     displayType = 'labels';
+    labelLoadPerTick = 10000000;
+  } else if (search.indexOf('loader') != -1) {
+    displayType = 'labels';
+    labelLoadPerTick = 2500;
   } else if (search.indexOf('spheres') != -1) {
     displayType = 'spheres';
+    labelLoadPerTick = 100;
   }
 
   if (search.indexOf('all') != -1) {
@@ -248,6 +254,21 @@ let hoverNode = null;
 
 const Graph = ForceGraph3D({ controlType: controlType })(elem)
 
+function getSprite(node, color) {
+  let sprite = new SpriteText(node.name);
+  sprite.backgroundColor = color;
+  sprite.color = "black";
+  sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+  sprite.padding = 0.5;
+  sprite.borderWidth = 0.2;
+  sprite.borderColor = "black";
+
+  return sprite;
+}
+
+let labelDone = 0;
+let labelSkipped = 0;
+
 window.onload = function() {
   Graph.enableNodeDrag(false)
     .linkColor(link => {
@@ -274,31 +295,35 @@ window.onload = function() {
     .nodeLabel(node => node.name)
     .numDimensions(dimensions)
     .nodeThreeObject(node => {
-      if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
-        let sprite = new SpriteText(node.name);
-        sprite.backgroundColor = "white";
-        sprite.color = "black";
-        sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
-        sprite.padding = 0.5;
-        sprite.borderWidth = 0.2;
-        sprite.borderColor = "black";
+      let result = false;
 
-        node.spriteNormal = sprite;
+      if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
+        if (labelDone<labelLoadPerTick) {
+          node.spriteNormal = getSprite(node, "white");
+          labelDone++;
+        } else {
+          labelSkipped++;
+        }
+      }
+
+      if (node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
+        result = node.spriteNormal;
       }
 
       if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
-        sprite = new SpriteText(node.name);
-        sprite.backgroundColor = "green";
-        sprite.color = "black";
-        sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
-        sprite.padding = 0.5;
-        sprite.borderWidth = 0.2;
-        sprite.borderColor = "black";
-
-        node.spriteSelected = sprite;
+        if (labelDone<labelLoadPerTick) {
+          node.spriteSelected = getSprite(node, "green");
+          labelDone++;
+        } else {
+          labelSkipped++;
+        }
       }
 
-      return hightlightNodes.has(node) ? (displayType == 'labels' ? node.spriteSelected : node.spriteNormal ) : (displayType == 'labels' ? node.spriteNormal : false);
+      if (node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
+        result = node.spriteSelected;
+      }
+
+      return result;
     })
     .onNodeClick(node => onNodeClick(node))
     .onLinkClick(link => onNodeClick(link.source))
@@ -307,8 +332,6 @@ window.onload = function() {
   if (dag) {
     Graph.dagMode(dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
   }
-  setTimeout(function() { document.getElementById("loading").style.opacity = "0";},1);
-  setTimeout(function() { document.getElementById("loading").style.display = "none";},1100);
 };
 
 window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
@@ -364,6 +387,19 @@ Graph.onEngineTick(function() {
   }
   Graph.onEngineTick(function(){});
 });
+
+setTimeout(function updateLabels() {
+  console.log(labelDone, labelSkipped);
+  if (labelSkipped > 0) {
+    updateHighlight();
+  } else {
+    setTimeout(function() { document.getElementById("loading").style.opacity = "0";},1);
+    setTimeout(function() { document.getElementById("loading").style.display = "none";},1100);
+  }
+  labelDone = 0;
+  labelSkipped = 0;
+  setTimeout(updateLabels, 1000);
+}, 1000);
 
 window.addEventListener('resize', function() {
   Graph.width(document.body.clientWidth);
