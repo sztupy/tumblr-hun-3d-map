@@ -45920,7 +45920,7 @@
     if (typeof Map !== 'function') {
       // TODO: Should we polyfill it ourselves? We don't use much operations there..
       throw new Error('ngraph.graph requires `Map` to be defined. Please polyfill it before using ngraph');
-    } 
+    }
 
     var nodes = new Map(); // nodeId => Node
     var links = new Map(); // linkId => Link
@@ -46029,7 +46029,7 @@
        * Synonym for `getLinkCount()`
        */
       getLinksCount: getLinkCount,
-      
+
       /**
        * Synonym for `getNodeCount()`
        */
@@ -46105,7 +46105,7 @@
 
       /**
        * Detects whether there is a node with given id
-       * 
+       *
        * Operation complexity is O(1)
        * NOTE: this function is synonym for getNode()
        *
@@ -46468,7 +46468,7 @@
   var createPatternBuilder$6 = function createPatternBuilder(dimension) {
 
     return pattern;
-    
+
     function pattern(template, config) {
       let indent = (config && config.indent) || 0;
       let join = (config && config.join !== undefined) ? config.join : '\n';
@@ -46562,7 +46562,7 @@ Object.defineProperty(this, '{var}', {\n\
       ${pattern('this.{var} = typeof {var} === "number" ? {var} : 0;', {indent: 4})}
     }
   }
-  
+
   Vector.prototype.reset = function () {
     ${pattern('this.{var} = ', {join: ''})}0;
   };`;
@@ -46670,7 +46670,7 @@ ${assignQuads('      node.')}
     var queue = updateQueue;
     var v;
     ${pattern('var d{var};', {indent: 4})}
-    var r; 
+    var r;
     ${pattern('var f{var} = 0;', {indent: 4})}
     var queueLength = 1;
     var shiftIdx = 0;
@@ -46898,9 +46898,9 @@ return createQuadTree;
     return `
   function isSamePosition(point1, point2) {
     ${pattern('var d{var} = Math.abs(point1.{var} - point2.{var});', {indent: 2})}
-  
+
     return ${pattern('d{var} < 1e-8', {join: ' && '})};
-  }  
+  }
 `;
   }
 
@@ -47216,7 +47216,7 @@ function InsertStackElement(node, body) {
     var v = Math.sqrt(${pattern('v{var} * v{var}', {join: ' + '})});
 
     if (v > 1) {
-      // We normalize it so that we move within timeStep range. 
+      // We normalize it so that we move within timeStep range.
       // for the case when v <= 1 - we let velocity to fade out.
       ${pattern('body.velocity.{var} = v{var} / v;', {indent: 6})}
     }
@@ -47250,7 +47250,7 @@ function InsertStackElement(node, body) {
 
   /**
    * Augments `target` with properties in `options`. Does not override
-   * target's properties if they are defined and matches expected type in 
+   * target's properties if they are defined and matches expected type in
    * options
    *
    * @returns {Object} merged object
@@ -47344,7 +47344,7 @@ function InsertStackElement(node, body) {
   function levy() {
     var beta = 3 / 2;
     var sigma = Math.pow(
-        gamma( 1 + beta ) * Math.sin(Math.PI * beta / 2) / 
+        gamma( 1 + beta ) * Math.sin(Math.PI * beta / 2) /
           (gamma((1 + beta) / 2) * beta * Math.pow(2, (beta - 1) / 2)),
         1/beta
     );
@@ -47455,7 +47455,7 @@ function InsertStackElement(node, body) {
         /**
          * Hook's law coefficient. 1 - solid spring.
          */
-        springCoefficient: 0.8, 
+        springCoefficient: 0.8,
 
         /**
          * Coulomb's law coefficient. It's used to repel nodes thus should be negative
@@ -47490,7 +47490,7 @@ function InsertStackElement(node, body) {
 
         /**
          * This parameter defines number of dimensions of the space where simulation
-         * is performed. 
+         * is performed.
          */
         dimensions: 2,
 
@@ -47537,7 +47537,7 @@ function InsertStackElement(node, body) {
     var forces = [];
     var forceMap = new Map();
     var iterationNumber = 0;
-   
+
     addForce('nbody', nbodyForce);
     addForce('spring', updateSpringForce);
 
@@ -47549,7 +47549,7 @@ function InsertStackElement(node, body) {
        * exposed for testing/performance purposes.
        */
       bodies: bodies,
-    
+
       quadTree: quadTree,
 
       /**
@@ -47569,7 +47569,7 @@ function InsertStackElement(node, body) {
        * Adds a new force to simulation
        */
       addForce: addForce,
-      
+
       /**
        * Removes a force from the simulation.
        */
@@ -47699,8 +47699,8 @@ function InsertStackElement(node, body) {
       /**
        * Returns bounding box which covers all bodies
        */
-      getBBox: getBoundingBox, 
-      getBoundingBox: getBoundingBox, 
+      getBBox: getBoundingBox,
+      getBoundingBox: getBoundingBox,
 
       invalidateBBox: function () {
         console.warn('invalidateBBox() is deprecated, bounds always recomputed on `getBBox()` call');
@@ -48228,8 +48228,8 @@ function InsertStackElement(node, body) {
    * Returns a function, that, as long as it continues to be invoked, will not
    * be triggered. The function will be called after it stops being called for
    * N milliseconds. If `immediate` is passed, trigger the function on the
-   * leading edge, instead of the trailing. The function also has a property 'clear' 
-   * that is a function which will clear the timer to prevent previously scheduled executions. 
+   * leading edge, instead of the trailing. The function also has a property 'clear'
+   * that is a function which will clear the timer to prevent previously scheduled executions.
    *
    * @source underscore.js
    * @see http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
@@ -48276,12 +48276,12 @@ function InsertStackElement(node, body) {
         timeout = null;
       }
     };
-    
+
     debounced.flush = function() {
       if (timeout) {
         result = func.apply(context, args);
         context = args = null;
-        
+
         clearTimeout(timeout);
         timeout = null;
       }
@@ -56954,8 +56954,8 @@ function InsertStackElement(node, body) {
           evType === 'pointerdown' && (state.isPointerPressed = true); // detect point drag
 
           !state.isPointerDragging && ev.type === 'pointermove' && (ev.pressure > 0 || state.isPointerPressed) // ev.pressure always 0 on Safari, so we used the isPointerPressed tracker
-          && (ev.pointerType !== 'touch' || ev.movementX === undefined || [ev.movementX, ev.movementY].some(function (m) {
-            return Math.abs(m) > 1;
+          && (ev.movementX === undefined || [ev.movementX, ev.movementY].some(function (m) {
+            return Math.abs(m) > 5;
           })) // relax drag trigger sensitivity on touch events
           && (state.isPointerDragging = true);
 
