@@ -170,8 +170,10 @@ function addToSystem(focusBlogId) {
       if (dag) {
         const original = linkData.find(link => link.source.id == destination && link.target.id == source);
         if (original) {
-          original.linkDirection = 'both';
-          changed = true;
+          if (original.linkDirection != 'both') {
+            original.linkDirection = 'both';
+            changed = true;
+          }
         } else {
           newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData};
         }
@@ -230,7 +232,7 @@ const Graph = ForceGraph3D({ controlType: controlType })(elem)
   .enableNodeDrag(false)
   .linkColor(link => {
       if (link.linkDirection == 'both') {
-        return 'rgba(255,0,0,1)';
+        return 'rgba(255,0,0,0.2)';
       }
       if (highlightLinks.has(link)) {
         if (highlightLinksBoth.has(link)) {
@@ -244,7 +246,7 @@ const Graph = ForceGraph3D({ controlType: controlType })(elem)
       return 'rgba(255,255,255,0.2)';
   })
   .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
-  .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 4 : 0)
+  .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
   .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
   .linkDirectionalParticleWidth(0.5)
   .linkOpacity(1)
