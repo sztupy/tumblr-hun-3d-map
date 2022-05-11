@@ -57037,8 +57037,8 @@ function InsertStackElement(node, body) {
 			state.pointerCount -= 1;
 			if (state.pointerCount < 0) {
 				state.pointerCount = 0;
+				state.isPointerPressed = false;
 			}
-			state.isPointerPressed = false;
 
 			console.log(state.pointerCount);
 
