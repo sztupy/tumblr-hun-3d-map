@@ -101,9 +101,26 @@ for (var sourceBlog in yearData) {
 
 const nodeData = tumblrData.nodes.map((name, idx) => ({ id: idx, name: name, val: present[idx] || 1 })).filter(data => present[data.id]);
 
-const availableBlogs = Array.from(availableBlogIds).map(id => tumblrData.nodes[id]).sort();
+const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
 
-console.log(availableBlogs);
+const searchBoxOpener = document.getElementById("search-open");
+searchBoxOpener.onclick = function() {
+  searchBox.style.display = "block";
+  searchBoxOpener.style.display = "none";
+}
+
+const searchBox = document.getElementById("search-values");
+for (let blog of availableBlogs) {
+  const child = document.createElement("a");
+  child.href="#";
+  child.textContent = blog.name;
+  child.onclick = () => {
+    onNodeClick(blog.id);
+    searchBox.style.display = "none";
+    searchBoxOpener.style.display = "block";
+  }
+  searchBox.appendChild(child);
+}
 
 const initData = {
   nodes: nodeData,
@@ -113,7 +130,13 @@ const initData = {
 
 function addToSystem(focusBlogId) {
   let changed = false;
-  const focusBlog = initData.nodes.find(node => node.id == focusBlogId);
+  let focusBlog = initData.nodes.find(node => node.id == focusBlogId);
+  if (!focusBlog) {
+    focusBlog = { id: focusBlogId, name: tumblrData.nodes[focusBlogId], val: 1, x: 1, y: 1, z: 0, neighborsTo: new Set(), neighborsFrom: new Set(), links: new Set() };
+    console.log("New Focus Node", focusBlog);
+    nodeData.push(focusBlog);
+    changed = true;
+  }
   for (var sourceBlog in yearData) {
     const sourceData = yearData[sourceBlog];
     const source = parseInt(sourceBlog);
@@ -355,13 +378,23 @@ Graph.onEngineTick(function() {
 });
 
 function onNodeClick(node) {
-  if (!node.z) {
-    node.z = 0;
+  let nodeAdded = false;
+  if (Number.isInteger(node)) {
+    let nodeData = initData.nodes.find(n => n.id == node);
+    if (!nodeData) {
+      nodeAdded = addToSystem(node);
+      node = initData.nodes.find(n => n.id == node);
+    } else {
+      node = nodeData;
+    }
   }
 
-  let nodeAdded = false;
   if (node && hoverNode === node) {
     nodeAdded = addToSystem(node.id);
+  }
+
+  if (!node.z) {
+    node.z = 0;
   }
 
   if (controlType != 'fly' || !node.z) {

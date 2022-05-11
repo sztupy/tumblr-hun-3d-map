@@ -21,6 +21,29 @@
         writing-mode: bt-lr; /* IE */
         -webkit-appearance: slider-vertical; /* Chromium */
       }
+      #search-open {
+        position: absolute;
+        top: 1em;
+        left: 1em;
+        display: block;
+        z-index: 1;
+        cursor: pointer;
+      }
+      #search-values {
+        top: 0;
+        left: 0;
+        bottom: 0;
+        background-color: white;
+        overflow: scroll;
+        position: absolute;
+        z-index: 1;
+        display: none;
+      }
+      #search-values  a {
+          display: block;
+          color: black;
+          text-decoration: none;
+        }
     </style>
 
     <script src="https://unpkg.com/three"></script>
@@ -30,6 +53,10 @@
   </head>
   <body>
     <div id="control"><input id="control-fly" type="range" orient="vertical" min="-20" max="100" value="0" autocomplete="off"></div>
+    <div id="search">
+      <div id="search-open">🔎</div>
+      <div id="search-values"></div>
+    </div>
     <div id="3d-graph"></div>
 
     <script src="src/main.js"></script>
