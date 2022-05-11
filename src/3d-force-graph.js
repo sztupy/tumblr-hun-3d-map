@@ -54184,6 +54184,17 @@ function InsertStackElement(node, body) {
 
   				this.mouseStatus ++;
 
+				if (this.mouseStatus < 2) {
+					this.moveState.back = 0;
+					this.moveState.forward = 0;
+				} else if (this.mouseStatus == 2) {
+					this.moveState.back = 0;
+					this.moveState.forward = 1;
+				} else if (this.mouseStatus >= 3) {
+					this.moveState.back = 1;
+					this.moveState.forward = 0;
+				}
+
   			} else {
 
   				switch ( event.button ) {
@@ -54200,6 +54211,7 @@ function InsertStackElement(node, body) {
   		};
 
   		this.mousemove = function ( event ) {
+			console.log(event);
 
   			if ( ! this.dragToLook || this.mouseStatus > 0 ) {
 
@@ -54207,8 +54219,8 @@ function InsertStackElement(node, body) {
   				const halfWidth = container.size[ 0 ] / 2;
   				const halfHeight = container.size[ 1 ] / 2;
 
-  				this.moveState.yawLeft = - ( ( event.pageX - container.offset[ 0 ] ) - halfWidth ) / halfWidth;
-  				this.moveState.pitchDown = ( ( event.pageY - container.offset[ 1 ] ) - halfHeight ) / halfHeight;
+  				this.moveState.yawLeft = - ( ( (event.pageX||event.touches[0].pageX) - container.offset[ 0 ] ) - halfWidth ) / halfWidth;
+  				this.moveState.pitchDown = ( ( (event.pageY||event.touches[0].pageY) - container.offset[ 1 ] ) - halfHeight ) / halfHeight;
 
   				this.updateRotationVector();
 
@@ -54222,8 +54234,17 @@ function InsertStackElement(node, body) {
 
   				this.mouseStatus --;
 
-  				this.moveState.yawLeft = this.moveState.pitchDown = 0;
+				if (this.mouseState == 0) {
+  					this.moveState.yawLeft = this.moveState.pitchDown = 0;
+				}
 
+				if (this.mouseStatus == 2) {
+					this.moveState.back = 0;
+					this.moveState.forward = 1;
+				} else if (this.mouseStatus < 2) {
+					this.moveState.forward = 0;
+					this.moveState.back = 0;
+				}
   			} else {
 
   				switch ( event.button ) {
@@ -54312,8 +54333,11 @@ function InsertStackElement(node, body) {
 
   			this.domElement.removeEventListener( 'contextmenu', contextmenu );
   			this.domElement.removeEventListener( 'mousedown', _mousedown );
+			this.domElement.removeEventListener( 'touchdown', _mousemove );
   			this.domElement.removeEventListener( 'mousemove', _mousemove );
+			this.domElement.removeEventListener( 'touchmove', _mousemove );
   			this.domElement.removeEventListener( 'mouseup', _mouseup );
+			this.domElement.removeEventListener( 'touchup', _mousemove );
 
   			window.removeEventListener( 'keydown', _keydown );
   			window.removeEventListener( 'keyup', _keyup );
@@ -54327,6 +54351,10 @@ function InsertStackElement(node, body) {
   		const _keyup = this.keyup.bind( this );
 
   		this.domElement.addEventListener( 'contextmenu', contextmenu );
+
+		this.domElement.addEventListener( 'touchmove', _mousemove );
+		this.domElement.addEventListener( 'touchdown', _mousedown );
+		this.domElement.addEventListener( 'touchup', _mouseup );
 
   		this.domElement.addEventListener( 'mousemove', _mousemove );
   		this.domElement.addEventListener( 'mousedown', _mousedown );
@@ -57610,4 +57638,3 @@ function InsertStackElement(node, body) {
   return _3dForceGraph;
 
 }));
-//# sourceMappingURL=3d-force-graph.js.map
