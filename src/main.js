@@ -1,8 +1,8 @@
 let controlType = 'orbit';
 let displayType = 'spheres';
-let valuesToLoad = 'minimal';
+let valuesToLoad = 'all';
 let labelLoadPerTick = 2500;
-let valuesToLimit = 0;
+let valuesToLimit = 50;
 let dimensions = 3;
 let dag = false;
 
@@ -283,9 +283,9 @@ searchBoxOpener.onclick = function() {
 const searchBox = document.getElementById("search");
 const searchValues = document.getElementById("search-values");
 
-for (let i = 0; i < 36; i++) {
+for (let i = 0; i < 37; i++) {
   var child = document.createElement("a");
-  let char = i.toString(36);
+  let char = i < 36 ? i.toString(36) : 'top';
   child.href = "#";
   child.innerHTML = char + " ";
   child.style.display = "inline";
@@ -300,6 +300,26 @@ for (let i = 0; i < 36; i++) {
   if (i%10 == 9) {
     document.getElementById("search-alphabet").appendChild(document.createElement("br"));
   }
+}
+
+// top blogs
+let topBlogs = availableBlogs.map(blog => {
+  let node = nodeData.find(node => node.id == blog.id);
+  return { name: blog.name, value: node ? node.val : 0, id: blog.id };
+}).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
+
+for (let blog of topBlogs) {
+  const child = document.createElement("a");
+  child.href="#";
+  child.textContent = blog.name;
+  child.classList.add("top-blog");
+  child.onclick = (event) => {
+    onNodeClick(blog.id);
+    searchBox.style.display = "none";
+    controls.style.display = "block";
+    event.preventDefault();
+  }
+  searchValues.appendChild(child);
 }
 
 let oldChar = null;
