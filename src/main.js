@@ -1,7 +1,7 @@
-let controlType = 'trackball';
-let displayType = 'labels';
-let valuesToLoad = 'all';
-let labelLoadPerTick = 10000000;
+let controlType = 'orbit';
+let displayType = 'spheres';
+let valuesToLoad = 'minimal';
+let labelLoadPerTick = 2500;
 let valuesToLimit = 0;
 let dimensions = 3;
 let dag = false;
@@ -28,7 +28,7 @@ if (window.location.search || window.location.hash) {
     labelLoadPerTick = 100;
   }
 
-  if (search.indexOf('all') != -1) {
+  if (search.indexOf('full') != -1) {
     valuesToLoad = 'all';
     valuesToLimit = 0;
   } else if (search.indexOf('recent') != -1) {
@@ -267,14 +267,42 @@ const ForceCharge = Graph
 
 const ForceCenter = Graph.d3Force('center').strength(0.01);
 
-// handle the search functionality
-const searchBoxOpener = document.getElementById("search-open");
-searchBoxOpener.onclick = function() {
-  searchBox.style.display = "block";
-  searchBoxOpener.style.display = "none";
+// handle the controls on the right
+const controls = document.getElementById("controls");
+
+document.getElementById("zoom-out").onclick = function() {
+  autoFocus = 'all';
 }
 
-const searchBox = document.getElementById("search-values");
+const searchBoxOpener = document.getElementById("search-open");
+searchBoxOpener.onclick = function() {
+  searchBox.style.display = "flex";
+  controls.style.display = "none";
+}
+
+const searchBox = document.getElementById("search");
+const searchValues = document.getElementById("search-values");
+
+for (let i = 0; i < 36; i++) {
+  var child = document.createElement("a");
+  let char = i.toString(36);
+  child.href = "#";
+  child.innerHTML = char + " ";
+  child.style.display = "inline";
+  child.onclick = function() {
+    let element = document.getElementById(`alphabet-${char}`);
+    if (element) {
+      console.log(element);
+      element.scrollIntoView(true);
+    }
+  }
+  document.getElementById("search-alphabet").appendChild(child);
+  if (i%10 == 9) {
+    document.getElementById("search-alphabet").appendChild(document.createElement("br"));
+  }
+}
+
+let oldChar = null;
 for (let blog of availableBlogs) {
   const child = document.createElement("a");
   child.href="#";
@@ -282,10 +310,14 @@ for (let blog of availableBlogs) {
   child.onclick = (event) => {
     onNodeClick(blog.id);
     searchBox.style.display = "none";
-    searchBoxOpener.style.display = "block";
+    controls.style.display = "block";
     event.preventDefault();
   }
-  searchBox.appendChild(child);
+  if (oldChar != blog.name.charAt(0)) {
+    oldChar = blog.name.charAt(0);
+    child.id = `alphabet-${oldChar}`;
+  }
+  searchValues.appendChild(child);
 }
 
 // zoom to a specific node
