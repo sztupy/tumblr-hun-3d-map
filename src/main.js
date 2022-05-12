@@ -57,85 +57,97 @@ if (window.location.search || window.location.hash) {
 }
 
 const linkData = [];
-const availableBlogIds = new Set();
-let maxMaxValue = 0;
-const yearData = tumblrData.years[valuesToLoad];
-const present = {};
-
-
-
-// initial graph loading, only loading nodes and edges above a certain threshold
-for (var sourceBlog in yearData) {
-  let sourceData = yearData[sourceBlog];
-  let maxValue = 0;
-  let maxDestination = null;
-  availableBlogIds.add(parseInt(sourceBlog));
-  for (var destinationBlog in sourceData) {
-    let destinationData = sourceData[destinationBlog];
-    availableBlogIds.add(parseInt(destinationBlog));
-    if (destinationData[1] > maxValue && destinationData[1] >= valuesToLimit) {
-      maxValue = destinationData[1];
-      maxDestination = destinationBlog;
-    }
-  }
-
-  if (maxDestination) {
-    let destinationBlog = maxDestination;
-    let destinationData = sourceData[destinationBlog];
-    const source = parseInt(sourceBlog);
-    const destination = parseInt(destinationBlog);
-
-    present[source] ||= 1;
-    present[destination] ||= 1;
-
-    if (present[destination] < maxValue) {
-      present[destination] = maxValue;
-      if (maxMaxValue < maxValue) {
-        maxMaxValue = maxValue;
-      }
-    }
-
-    if (dag) {
-      const original = linkData.find(link => link.source == destination && link.target == source);
-      if (original) {
-        original.linkDirection = 'both';
-      } else {
-        linkData.push({ source: source, target: destination, distance: (1/destinationData[0])* 30, data: destinationData});
-      }
-    } else {
-      linkData.push({ source: source, target: destination, distance: (1/destinationData[0])* 30, data: destinationData});
-    }
-  }
-}
-
-const nodeData = tumblrData.nodes.map((name, idx) => ({ id: idx, name: name, val: present[idx] || 1 })).filter(data => present[data.id]);
-
-const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
+const nodeData = [];
+const links = {};
+const nodes = {};
 
 const initData = {
   nodes: nodeData,
   links: linkData
 };
 
-// add a new node to the graph focused on the selection. It will add all nodes regardless of the current valuesToLimit setting
-function addToSystem(focusBlogId) {
-  let changed = false;
-  let focusBlog = initData.nodes.find(node => node.id == focusBlogId);
-  if (!focusBlog) {
-    focusBlog = { id: focusBlogId, name: tumblrData.nodes[focusBlogId], val: 1, x: 1, y: 1, z: 0, neighborsTo: new Set(), neighborsFrom: new Set(), links: new Set() };
-    nodeData.push(focusBlog);
-    changed = true;
+const availableBlogIds = new Set();
+let maxMaxValue = 0;
+const yearData = tumblrData.years[valuesToLoad];
+const present = {};
+
+// loads a node from the tumblr database into the graph system
+function getSystemNode(id) {
+  if (nodes[id]) {
+    return [false, nodes[id]];
   }
+
+  let newNode = {
+    id: id,
+    name: tumblrData.nodes[id],
+    val: 1,
+    neighborsTo: new Set(),
+    neighborsFrom: new Set(),
+    links: new Set()
+  };
+
+  nodes[id] = newNode;
+  nodeData.push(newNode);
+
+  let element = document.getElementById(`blog-${id}`);
+  if (element) {
+    element.classList.add('top-blog');
+  }
+
+  return [true, newNode];
+}
+
+function getSystemLink(source, target, data) {
+  let sourceId = Number.isInteger(source) ? source : source.id;
+  let targetId = Number.isInteger(target) ? target : target.id;
+
+  if (links[source] && links[source][target]) {
+    return [false, links[source][target]];
+  }
+
+  let changed, sourceNode, targetNode;
+  [changed, sourceNode] = getSystemNode(sourceId);
+  [changed, targetNode] = getSystemNode(targetId);
+
+  let newLink = {
+    source: sourceNode,
+    target: targetNode,
+    distance: (1/data[0])* 30,
+    data: data
+  };
+
+  sourceNode.neighborsTo.add(targetNode);
+  targetNode.neighborsFrom.add(sourceNode);
+  sourceNode.links.add(newLink);
+  targetNode.links.add(newLink);
+
+  links[sourceId] ||= {};
+  links[sourceId][targetId] = newLink;
+
+  linkData.push(newLink);
+
+  return [true, newLink];
+}
+
+// add a new node to the graph focused on the selection. It will add all nodes regardless of the current valuesToLimit setting
+function addToSystem(focusBlogId, options = {}) {
+  options.valuesToLimit ||= 0;
+
+  let changed = false;
   for (var sourceBlog in yearData) {
     const sourceData = yearData[sourceBlog];
     const source = parseInt(sourceBlog);
+    availableBlogIds.add(source);
 
     let maxValue = 0;
     let maxDestination = null;
 
     for (var destinationBlog in sourceData) {
       const destinationData = sourceData[destinationBlog];
-      if (destinationData[1] > maxValue) {
+      const destination = parseInt(destinationBlog);
+      availableBlogIds.add(destination);
+
+      if (destinationData[1] > maxValue && destinationData[1] > options.valuesToLimit) {
         maxValue = destinationData[1];
         maxDestination = destinationBlog;
         if (maxMaxValue < maxValue) {
@@ -148,92 +160,55 @@ function addToSystem(focusBlogId) {
       const destinationBlog = maxDestination;
       const destinationData = sourceData[destinationBlog];
       const destination = parseInt(destinationBlog);
-      if (destination !== focusBlogId && source !== focusBlogId) {
+      if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
         continue;
       }
 
-      let sourceNode = nodeData.find(node => node.id == source);
-      if (!sourceNode) {
-        sourceNode = { id: source, name: tumblrData.nodes[source], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z };
-        nodeData.push(sourceNode);
-        changed = true;
-      }
+      let [changedSource, sourceNode] = getSystemNode(source);
+      let [changedDestination, destinationNode] = getSystemNode(destination);
 
-      let destinationNode = nodeData.find(node => node.id == destination);
-      if (!destinationNode) {
-        destinationNode = { id: destination, name: tumblrData.nodes[destination], val: 1, x: focusBlog.x, y: focusBlog.y, z: focusBlog.z};
-        nodeData.push(destinationNode);
-        changed = true;
-      }
+      changed = changed || changedSource || changedDestination;
 
-      if (destinationNode.value < maxValue) {
-        destinationNode.value = maxValue;
+      if (destinationNode.val < maxValue) {
+        destinationNode.val = maxValue;
         destinationNode.spriteNormal = null;
         destinationNode.spriteSelected = null;
       }
 
-      if (linkData.find(link => link.source.id == source && link.target.id == destination)) {
+      if (links[source] && links[source][destination]) {
         continue;
       };
 
-      let newLink = null;
       if (dag) {
-        const original = linkData.find(link => link.source.id == destination && link.target.id == source);
+        const original = links[destination] && links[destination][source];
         if (original) {
           if (original.linkDirection != 'both') {
             original.linkDirection = 'both';
             changed = true;
           }
         } else {
-          newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData};
+          getSystemLink(source, destination, destinationData);
+          changed = true;
         }
       } else {
-        newLink = { source: sourceNode, target: destinationNode, distance: (1/destinationData[0])* 30, data: destinationData };
-      }
-
-      if (newLink) {
-        linkData.push(newLink);
+        getSystemLink(source, destination, destinationData);
         changed = true;
       }
     }
   }
-  if (changed) {
-    fillNeighbours();
+  if (changed && !options.skipUpdate) {
     Graph.graphData(initData);
   }
 
   return changed;
 }
 
-// set up internal information in the nodes for easier processing of selections
-function fillNeighbours() {
-  initData.links.forEach(link => {
-    const a = Number.isInteger(link.source) ? initData.nodes.find(node => link.source == node.id) : link.source;
-    const b = Number.isInteger(link.target) ? initData.nodes.find(node => link.target == node.id) : link.target;
+// initial graph loading, only loading nodes and edges above a certain threshold
+addToSystem(null, { valuesToLimit: valuesToLimit, skipUpdate: true });
 
-    !a.neighborsTo && (a.neighborsTo = new Set());
-    !a.neighborsFrom && (a.neighborsFrom = new Set());
-    !b.neighborsTo && (b.neighborsTo = new Set());
-    !b.neighborsFrom && (b.neighborsFrom = new Set());
-    a.neighborsTo.add(b);
-    b.neighborsFrom.add(a);
-
-    !a.links && (a.links = new Set());
-    !b.links && (b.links = new Set());
-    a.links.add(link);
-    b.links.add(link);
-  });
-}
-fillNeighbours();
+const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
 
 const elem = document.getElementById('3d-graph');
-
-const highlightLinks = new Set();
-const highlightLinksTo = new Set();
-const highlightLinksBoth = new Set();
-const hightlightNodes = new Set();
-
-let hoverNode = null;
 
 // set up the Graph object
 const Graph = ForceGraph3D({ controlType: controlType })(elem)
@@ -314,6 +289,7 @@ for (let blog of topBlogs) {
   const child = document.createElement("a");
   child.href="#";
   child.textContent = blog.name;
+  child.id=`top-blog-${blog.id}`;
   child.classList.add("top-blog");
   child.onclick = (event) => {
     onNodeClick(blog.id);
@@ -328,13 +304,13 @@ let oldChar = null;
 for (let blog of availableBlogs) {
   const child = document.createElement("a");
   child.href="#";
+  child.id=`blog-${blog.id}`;
   child.textContent = blog.name;
   if (nodeData.find(node => node.id == blog.id)) {
     child.classList.add("top-blog");
   }
   child.onclick = (event) => {
     onNodeClick(blog.id);
-    child.classList.add("top-blog");
     searchBox.style.display = "none";
     controls.style.display = "block";
     event.preventDefault();
@@ -411,6 +387,12 @@ window.addEventListener('resize', function() {
   Graph.height(document.body.clientHeight);
 });
 
+const highlightLinks = new Set();
+const highlightLinksTo = new Set();
+const highlightLinksBoth = new Set();
+const hightlightNodes = new Set();
+let hoverNode = null;
+
 // handle clicking on nodes, including both opening up the node, and making it the selected one
 function onNodeClick(node) {
   let nodeAdded = false;
@@ -461,7 +443,7 @@ function getSprite(node, color) {
   let sprite = new SpriteText(node.name);
   sprite.backgroundColor = color;
   sprite.color = "black";
-  sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+  sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30;
   sprite.padding = 0.5;
   sprite.borderWidth = 0.2;
   sprite.borderColor = "black";
