@@ -62,6 +62,8 @@ let maxMaxValue = 0;
 const yearData = tumblrData.years[valuesToLoad];
 const present = {};
 
+
+
 // initial graph loading, only loading nodes and edges above a certain threshold
 for (var sourceBlog in yearData) {
   let sourceData = yearData[sourceBlog];

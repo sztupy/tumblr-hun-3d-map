@@ -54084,6 +54084,7 @@ function InsertStackElement(node, body) {
       // API
 
       this.movementSpeed = 1.0;
+      this.movementSpeedMultiplier = 1.0;
       this.rollSpeed = 0.005;
 
       this.dragToLook = false;
@@ -54119,7 +54120,7 @@ function InsertStackElement(node, body) {
         switch ( event.code ) {
 
           case 'ShiftLeft':
-          case 'ShiftRight': this.movementSpeedMultiplier = .1; break;
+          case 'ShiftRight': this.movementSpeedMultiplier = 10; break;
 
           case 'KeyW': this.moveState.forward = 1; break;
           case 'KeyS': this.moveState.back = 1; break;
@@ -54189,7 +54190,10 @@ function InsertStackElement(node, body) {
         } else if (this.mouseStatus == 2) {
           this.moveState.back = 0;
           this.moveState.forward = 1;
-        } else if (this.mouseStatus >= 3) {
+          this.movementSpeedMultiplier = 1;
+        } else if (this.mouseStatus == 3) {
+          this.movementSpeedMultiplier = 10;
+        } else if (this.mouseStatus >= 4) {
           this.moveState.back = 1;
           this.moveState.forward = 0;
         }
@@ -54224,21 +54228,21 @@ function InsertStackElement(node, body) {
           this.updateRotationVector();
 
         }
-
       };
 
       this.mouseup = function ( event ) {
         if ( this.dragToLook ) {
-
           this.mouseStatus --;
 
-        if (this.mouseStatus == 0) {
+          if (this.mouseStatus == 0) {
             this.moveState.yawLeft = this.moveState.pitchDown = 0;
         }
 
-        if (this.mouseStatus == 2) {
+        if (this.mouseStatus == 3) {
           this.moveState.back = 0;
           this.moveState.forward = 1;
+        } else if (this.mouseStatus == 2) {
+          this.movementSpeedMultiplier = 1;
         } else if (this.mouseStatus < 2) {
           this.moveState.forward = 0;
           this.moveState.back = 0;
@@ -54263,7 +54267,7 @@ function InsertStackElement(node, body) {
 
       this.update = function ( delta ) {
 
-        const moveMult = delta * scope.movementSpeed;
+        const moveMult = delta * scope.movementSpeed * this.movementSpeedMultiplier;
         const rotMult = delta * scope.rollSpeed;
 
         scope.object.translateX( scope.moveVector.x * moveMult );
@@ -54332,13 +54336,13 @@ function InsertStackElement(node, body) {
 
         this.domElement.removeEventListener( 'contextmenu', contextmenu );
         this.domElement.removeEventListener( 'mousedown', _mousedown );
-      this.domElement.removeEventListener( 'mousemove', _mousemove );
-      this.domElement.removeEventListener( 'mouseup', _mouseup );
+        this.domElement.removeEventListener( 'mousemove', _mousemove );
+        this.domElement.removeEventListener( 'mouseup', _mouseup );
 
-      this.domElement.removeEventListener( 'touchstart', _mousedown );
-      this.domElement.removeEventListener( 'touchmove', _mousemove );
-      this.domElement.removeEventListener( 'touchend', _mouseup );
-      this.domElement.removeEventListener( 'touchcancel', _mouseup );
+        this.domElement.removeEventListener( 'touchstart', _mousedown );
+        this.domElement.removeEventListener( 'touchmove', _mousemove );
+        this.domElement.removeEventListener( 'touchend', _mouseup );
+        this.domElement.removeEventListener( 'touchcancel', _mouseup );
 
         window.removeEventListener( 'keydown', _keydown );
         window.removeEventListener( 'keyup', _keyup );
@@ -54353,10 +54357,10 @@ function InsertStackElement(node, body) {
 
       this.domElement.addEventListener( 'contextmenu', contextmenu );
 
-    this.domElement.addEventListener( 'touchmove', _mousemove );
-    this.domElement.addEventListener( 'touchstart', _mousedown );
-    this.domElement.addEventListener( 'touchend', _mouseup );
-    this.domElement.addEventListener( 'touchcancel', _mouseup );
+      this.domElement.addEventListener( 'touchmove', _mousemove );
+      this.domElement.addEventListener( 'touchstart', _mousedown );
+      this.domElement.addEventListener( 'touchend', _mouseup );
+      this.domElement.addEventListener( 'touchcancel', _mouseup );
 
       this.domElement.addEventListener( 'mousemove', _mousemove );
       this.domElement.addEventListener( 'mousedown', _mousedown );
