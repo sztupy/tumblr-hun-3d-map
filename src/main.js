@@ -1,5 +1,3 @@
-const present = {};
-
 let controlType = 'trackball';
 let displayType = 'labels';
 let valuesToLoad = 'all';
@@ -8,6 +6,7 @@ let valuesToLimit = 0;
 let dimensions = 3;
 let dag = false;
 
+// load up initial configuration from the URL
 if (window.location.search || window.location.hash) {
   const search = window.location.search || window.location.hash;
   if (search.indexOf('fly') != -1) {
@@ -60,8 +59,10 @@ if (window.location.search || window.location.hash) {
 const linkData = [];
 const availableBlogIds = new Set();
 let maxMaxValue = 0;
-let yearData = tumblrData.years[valuesToLoad];
+const yearData = tumblrData.years[valuesToLoad];
+const present = {};
 
+// initial graph loading, only loading nodes and edges above a certain threshold
 for (var sourceBlog in yearData) {
   let sourceData = yearData[sourceBlog];
   let maxValue = 0;
@@ -109,32 +110,12 @@ const nodeData = tumblrData.nodes.map((name, idx) => ({ id: idx, name: name, val
 
 const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
 
-const searchBoxOpener = document.getElementById("search-open");
-searchBoxOpener.onclick = function() {
-  searchBox.style.display = "block";
-  searchBoxOpener.style.display = "none";
-}
-
-const searchBox = document.getElementById("search-values");
-for (let blog of availableBlogs) {
-  const child = document.createElement("a");
-  child.href="#";
-  child.textContent = blog.name;
-  child.onclick = (event) => {
-    onNodeClick(blog.id);
-    searchBox.style.display = "none";
-    searchBoxOpener.style.display = "block";
-    event.preventDefault();
-  }
-  searchBox.appendChild(child);
-}
-
 const initData = {
   nodes: nodeData,
   links: linkData
 };
 
-
+// add a new node to the graph focused on the selection. It will add all nodes regardless of the current valuesToLimit setting
 function addToSystem(focusBlogId) {
   let changed = false;
   let focusBlog = initData.nodes.find(node => node.id == focusBlogId);
@@ -222,6 +203,7 @@ function addToSystem(focusBlogId) {
   return changed;
 }
 
+// set up internal information in the nodes for easier processing of selections
 function fillNeighbours() {
   initData.links.forEach(link => {
     const a = Number.isInteger(link.source) ? initData.nodes.find(node => link.source == node.id) : link.source;
@@ -240,7 +222,6 @@ function fillNeighbours() {
     b.links.add(link);
   });
 }
-
 fillNeighbours();
 
 const elem = document.getElementById('3d-graph');
@@ -252,40 +233,12 @@ const hightlightNodes = new Set();
 
 let hoverNode = null;
 
+// set up the Graph object
 const Graph = ForceGraph3D({ controlType: controlType })(elem)
-
-function getSprite(node, color) {
-  let sprite = new SpriteText(node.name);
-  sprite.backgroundColor = color;
-  sprite.color = "black";
-  sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
-  sprite.padding = 0.5;
-  sprite.borderWidth = 0.2;
-  sprite.borderColor = "black";
-
-  return sprite;
-}
-
-let labelDone = 0;
-let labelSkipped = 0;
 
 window.onload = function() {
   Graph.enableNodeDrag(false)
-    .linkColor(link => {
-        if (link.linkDirection == 'both') {
-          return 'rgba(255,0,0,0.2)';
-        }
-        if (highlightLinks.has(link)) {
-          if (highlightLinksBoth.has(link)) {
-            return 'rgba(255,0,0,0.8)';
-          }
-          if (highlightLinksTo.has(link)) {
-            return 'rgba(255,255,0,0.5)';
-          }
-          return 'rgba(0,255,0,0.5)';
-        }
-        return 'rgba(255,255,255,0.2)';
-    })
+    .linkColor(getLinkColor)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
@@ -294,38 +247,8 @@ window.onload = function() {
     .nodeResolution(1)
     .nodeLabel(node => node.name)
     .numDimensions(dimensions)
-    .nodeThreeObject(node => {
-      let result = false;
-
-      if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
-        if (labelDone<labelLoadPerTick) {
-          node.spriteNormal = getSprite(node, "white");
-          labelDone++;
-        } else {
-          labelSkipped++;
-        }
-      }
-
-      if (node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
-        result = node.spriteNormal;
-      }
-
-      if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
-        if (labelDone<labelLoadPerTick) {
-          node.spriteSelected = getSprite(node, "green");
-          labelDone++;
-        } else {
-          labelSkipped++;
-        }
-      }
-
-      if (node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
-        result = node.spriteSelected;
-      }
-
-      return result;
-    })
-    .onNodeClick(node => onNodeClick(node))
+    .nodeThreeObject(getNodeObject)
+    .onNodeClick(onNodeClick)
     .onLinkClick(link => onNodeClick(link.source))
     .graphData(initData);
 
@@ -333,10 +256,6 @@ window.onload = function() {
     Graph.dagMode(dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
   }
 };
-
-window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
-window.addEventListener('pointerdown', function () { autoFocus = false; }, { passive: true });
-window.addEventListener('wheel', function (event) { if (Math.abs(event.deltaY)>1 || Math.abs(event.deltaX)>1) autoFocus = false; }, { passive: true });
 
 const ForceLink = Graph
   .d3Force('link')
@@ -348,8 +267,28 @@ const ForceCharge = Graph
 
 const ForceCenter = Graph.d3Force('center').strength(0.01);
 
-let autoFocus = 'all';
+// handle the search functionality
+const searchBoxOpener = document.getElementById("search-open");
+searchBoxOpener.onclick = function() {
+  searchBox.style.display = "block";
+  searchBoxOpener.style.display = "none";
+}
 
+const searchBox = document.getElementById("search-values");
+for (let blog of availableBlogs) {
+  const child = document.createElement("a");
+  child.href="#";
+  child.textContent = blog.name;
+  child.onclick = (event) => {
+    onNodeClick(blog.id);
+    searchBox.style.display = "none";
+    searchBoxOpener.style.display = "block";
+    event.preventDefault();
+  }
+  searchBox.appendChild(child);
+}
+
+// zoom to a specific node
 function zoomTo(node, speed = 1000) {
   const distance = Math.sqrt(Math.sqrt(node.val)) / Math.sqrt(Math.sqrt(maxMaxValue)) * 500;
   const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
@@ -361,6 +300,9 @@ function zoomTo(node, speed = 1000) {
   Graph.cameraPosition(newPos, node, speed);
 }
 
+// run the autoFocus handler, that will make sure the camera is positioned nicely on the object that should be
+// focused on, until there is any keyboard, mouse or touch activity
+let autoFocus = 'all';
 function runZoom() {
   if (autoFocus == 'all') {
     Graph.zoomToFit(400);
@@ -376,8 +318,10 @@ function runZoom() {
     setTimeout(runZoom, 500);
   }
 }
-
 runZoom();
+window.addEventListener('keydown', function () { autoFocus = false; }, { passive: true });
+window.addEventListener('pointerdown', function () { autoFocus = false; }, { passive: true });
+window.addEventListener('wheel', function (event) { if (Math.abs(event.deltaY)>1 || Math.abs(event.deltaX)>1) autoFocus = false; }, { passive: true });
 
 // Firefox mobile doesn't load in full screen, need the following to force it to load properly
 Graph.onEngineTick(function() {
@@ -388,8 +332,10 @@ Graph.onEngineTick(function() {
   Graph.onEngineTick(function(){});
 });
 
+// handle the "loading" style label display system, that should allow some devices to load up larger graphs
+let labelDone = 0;
+let labelSkipped = 0;
 setTimeout(function updateLabels() {
-  console.log(labelDone, labelSkipped);
   if (labelSkipped > 0) {
     updateHighlight();
   } else {
@@ -401,11 +347,13 @@ setTimeout(function updateLabels() {
   setTimeout(updateLabels, 1000);
 }, 1000);
 
+// handle resize events to make sure the screen keeps it's normal size
 window.addEventListener('resize', function() {
   Graph.width(document.body.clientWidth);
   Graph.height(document.body.clientHeight);
 });
 
+// handle clicking on nodes, including both opening up the node, and making it the selected one
 function onNodeClick(node) {
   let nodeAdded = false;
   if (Number.isInteger(node)) {
@@ -450,8 +398,72 @@ function onNodeClick(node) {
   updateHighlight();
 }
 
+// generate label for a node for a specific color
+function getSprite(node, color) {
+  let sprite = new SpriteText(node.name);
+  sprite.backgroundColor = color;
+  sprite.color = "black";
+  sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 40;
+  sprite.padding = 0.5;
+  sprite.borderWidth = 0.2;
+  sprite.borderColor = "black";
+
+  return sprite;
+}
+
+// obtain how to display the specific node. Has some extra settings to allow lazy loading of labels for larger graphs
+function getNodeObject(node) {
+  let result = false;
+
+  if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
+    if (labelDone<labelLoadPerTick) {
+      node.spriteNormal = getSprite(node, "white");
+      labelDone++;
+    } else {
+      labelSkipped++;
+    }
+  }
+
+  if (node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
+    result = node.spriteNormal;
+  }
+
+  if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
+    if (labelDone<labelLoadPerTick) {
+      node.spriteSelected = getSprite(node, "green");
+      labelDone++;
+    } else {
+      labelSkipped++;
+    }
+  }
+
+  if (node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
+    result = node.spriteSelected;
+  }
+
+  return result;
+}
+
+// obtain the color of the link
+function getLinkColor(link)
+{
+  if (link.linkDirection == 'both') {
+    return 'rgba(255,0,0,0.2)';
+  }
+  if (highlightLinks.has(link)) {
+    if (highlightLinksBoth.has(link)) {
+      return 'rgba(255,0,0,0.8)';
+    }
+    if (highlightLinksTo.has(link)) {
+      return 'rgba(255,255,0,0.5)';
+    }
+    return 'rgba(0,255,0,0.5)';
+  }
+  return 'rgba(255,255,255,0.2)';
+}
+
+// trigger update of highlighted objects in scene
 function updateHighlight() {
-  // trigger update of highlighted objects in scene
   Graph
     .linkColor(Graph.linkColor())
     .linkWidth(Graph.linkWidth())

@@ -48,18 +48,15 @@
         left: 50%;
         transform: translate(-50%, -50%);
 
-        border: 1px solid black;
-
         transition: opacity 1s;
+      }
+      #loading img {
+        border-radius: 10%;
+        opacity: 0.75;
       }
     </style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
-    <script src="https://unpkg.com/three"></script>
-    <script src="https://unpkg.com/three-spritetext"></script>
-    <script src="src/3d-force-graph.js"></script>
-    <script src="src/data.js"></script>
   </head>
   <body>
     <div id="search">
@@ -69,6 +66,10 @@
     <div id="3d-graph"></div>
     <div id="loading"><img src="img/loading-cat.gif"></div>
 
+    <script src="https://unpkg.com/three"></script>
+    <script src="https://unpkg.com/three-spritetext"></script>
+    <script src="src/3d-force-graph.js"></script>
+    <script src="src/data.js"></script>
     <script src="src/main.js"></script>
   </body>
 </html>
