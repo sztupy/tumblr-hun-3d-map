@@ -1,14 +1,18 @@
 let controlType = 'orbit';
 let displayType = 'spheres';
 let valuesToLoad = 'all';
+let graphType = 'topblog';
+let topElems = 1;
 let labelLoadPerTick = 2500;
 let valuesToLimit = 50;
 let dimensions = 3;
 let dag = false;
 
 // load up initial configuration from the URL
-if (window.location.search || window.location.hash) {
-  const search = window.location.search || window.location.hash;
+if (window.location.search) {
+  const search = window.location.search.slice(1, window.location.search.length).split('-');
+
+  console.log(search);
   if (search.indexOf('fly') != -1) {
     controlType = 'fly';
   } else if (search.indexOf('orbit') != -1) {
@@ -51,6 +55,19 @@ if (window.location.search || window.location.hash) {
     dag = 'radialin';
   } else if (search.indexOf('dar') != -1) {
     dag = 'radialout';
+  }
+
+  let topblog;
+  if (topblog = search.find(name => name.startsWith('topblog'))) {
+    graphType = 'topblog';
+    topElems = 1;
+    let match;
+    if (match = topblog.match(/topblog_(\d+)/)) {
+      topElems = parseInt(match[1]);
+      if (topElems<=0 || topElems>100) {
+        topElems = 1;
+      }
+    }
   }
 } else {
   throw new Error();
@@ -112,7 +129,8 @@ function getSystemLink(source, target, data) {
   let newLink = {
     source: sourceNode,
     target: targetNode,
-    distance: (1/data[0])* 30,
+    distance: (1/data[0]) * 300,
+    strength: data[0],
     data: data
   };
 
@@ -139,25 +157,24 @@ function addToSystem(focusBlogId, options = {}) {
     const source = parseInt(sourceBlog);
     availableBlogIds.add(source);
 
-    let maxValue = 0;
-    let maxDestination = null;
+    let destinations = [];
 
     for (var destinationBlog in sourceData) {
       const destinationData = sourceData[destinationBlog];
       const destination = parseInt(destinationBlog);
       availableBlogIds.add(destination);
 
-      if (destinationData[1] > maxValue && destinationData[1] > options.valuesToLimit) {
-        maxValue = destinationData[1];
-        maxDestination = destinationBlog;
-        if (maxMaxValue < maxValue) {
-          maxMaxValue = maxValue;
-        }
-      }
+      destinations.push({id: destination, blog: destinationBlog, value: destinationData[1]});
     }
 
-    if (maxDestination) {
-      const destinationBlog = maxDestination;
+    destinations.sort((a, b) => b.value - a.value);
+    if (options.valuesToLimit > 0) {
+      destinations = destinations.filter((d) => d.value >= options.valuesToLimit);
+    }
+    destinations = destinations.slice(0, topElems);
+
+    for (destData of destinations) {
+      const destinationBlog = destData.blog;
       const destinationData = sourceData[destinationBlog];
       const destination = parseInt(destinationBlog);
       if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
@@ -169,26 +186,26 @@ function addToSystem(focusBlogId, options = {}) {
 
       changed = changed || changedSource || changedDestination;
 
-      if (destinationNode.val < maxValue) {
-        destinationNode.val = maxValue;
+      if (destinationNode.val < destData.value) {
+        destinationNode.val = destData.value;
         destinationNode.spriteNormal = null;
         destinationNode.spriteSelected = null;
+
+        if (maxMaxValue < destData.value) {
+          maxMaxValue = destData.value;
+        }
       }
 
       if (links[source] && links[source][destination]) {
         continue;
       };
 
-      if (dag) {
-        const original = links[destination] && links[destination][source];
-        if (original) {
-          if (original.linkDirection != 'both') {
-            original.linkDirection = 'both';
-            changed = true;
-          }
-        } else {
-          getSystemLink(source, destination, destinationData);
+      const original = links[destination] && links[destination][source];
+      if (original) {
+        if (original.linkDirection != 'both') {
+          original.linkDirection = 'both';
           changed = true;
+          if (!dag) getSystemLink(source, destination, destinationData);
         }
       } else {
         getSystemLink(source, destination, destinationData);
@@ -236,7 +253,8 @@ window.onload = function() {
 
 const ForceLink = Graph
   .d3Force('link')
-  .distance(link => link.distance);
+  .distance(link => link.distance)
+ // .strength(link => 1 - link.strength / maxMaxValue * 0.8);
 
 const ForceCharge = Graph
   .d3Force('charge')
@@ -443,7 +461,7 @@ function getSprite(node, color) {
   let sprite = new SpriteText(node.name);
   sprite.backgroundColor = color;
   sprite.color = "black";
-  sprite.textHeight = 1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30;
+  sprite.textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30)/10;
   sprite.padding = 0.5;
   sprite.borderWidth = 0.2;
   sprite.borderColor = "black";
@@ -488,7 +506,11 @@ function getNodeObject(node) {
 function getLinkColor(link)
 {
   if (link.linkDirection == 'both') {
-    return 'rgba(255,0,0,0.2)';
+    if (highlightLinksBoth.has(link)) {
+      return 'rgba(255,0,0,0.8)';
+    } else {
+      return 'rgba(255,0,0,0.2)';
+    }
   }
   if (highlightLinks.has(link)) {
     if (highlightLinksBoth.has(link)) {
