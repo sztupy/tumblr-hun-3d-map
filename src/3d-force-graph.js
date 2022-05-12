@@ -8193,16 +8193,12 @@ function InsertStackElement(node, body) {
               var opacity = state.nodeOpacity * colorAlpha(color);
 
               if (obj.material.type !== 'MeshLambertMaterial' || !obj.material.color.equals(materialColor) || obj.material.opacity !== opacity) {
-                if (!sphereMaterials.hasOwnProperty(color)) {
-                  sphereMaterials[color] = new three$1$1.MeshLambertMaterial({
-                    color: materialColor,
-                    transparent: true,
-                    opacity: opacity
-                  });
-                }
-
                 obj.material.dispose();
-                obj.material = sphereMaterials[color];
+                obj.material = new three$1$1.MeshLambertMaterial({
+                  color: materialColor,
+                  transparent: true,
+                  opacity: opacity
+                });
               }
             }
           }

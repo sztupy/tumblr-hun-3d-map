@@ -188,8 +188,7 @@ function addToSystem(focusBlogId, options = {}) {
 
       if (destinationNode.val < destData.value) {
         destinationNode.val = destData.value;
-        destinationNode.spriteNormal = null;
-        destinationNode.spriteSelected = null;
+        destinationNode.sprite = null;
 
         if (maxMaxValue < destData.value) {
           maxMaxValue = destData.value;
@@ -265,14 +264,21 @@ const ForceCenter = Graph.d3Force('center').strength(0.01);
 // handle the controls on the right
 const controls = document.getElementById("controls");
 
-document.getElementById("zoom-out").onclick = function() {
+document.getElementById("zoom-out").onclick = function(e) {
   autoFocus = 'all';
+  e.preventDefault();
+}
+
+document.getElementById("gay-mode").onclick = function(e) {
+  gayMode(true);
+  e.preventDefault();
 }
 
 const searchBoxOpener = document.getElementById("search-open");
-searchBoxOpener.onclick = function() {
+searchBoxOpener.onclick = function(e) {
   searchBox.style.display = "flex";
   controls.style.display = "none";
+  e.preventDefault();
 }
 
 const searchBox = document.getElementById("search");
@@ -284,12 +290,13 @@ for (let i = 0; i < 37; i++) {
   child.href = "#";
   child.innerHTML = char + " ";
   child.style.display = "inline";
-  child.onclick = function() {
+  child.onclick = function(e) {
     let element = document.getElementById(`alphabet-${char}`);
     if (element) {
       console.log(element);
       element.scrollIntoView(true);
     }
+    e.preventDefault();
   }
   document.getElementById("search-alphabet").appendChild(child);
   if (i%10 == 9) {
@@ -457,15 +464,15 @@ function onNodeClick(node) {
 }
 
 // generate label for a node for a specific color
-function getSprite(node, color) {
+function getSprite(node) {
   let sprite = new SpriteText(node.name);
-  sprite._backgroundColor = color;
-  sprite._color = "black";
-  sprite._textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30)/10;
-  sprite._padding = 0.5;
-  sprite._borderWidth = 0.2;
-  sprite._borderColor = "black";
-  sprite._genCanvas();
+  sprite.backgroundColor = "white";
+  sprite.color = "black";
+  sprite.textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30);
+  sprite.padding = 0.5;
+  sprite.borderWidth = 0.2;
+  sprite.borderColor = "black";
+  sprite.genCanvas();
 
   return sprite;
 }
@@ -474,30 +481,23 @@ function getSprite(node, color) {
 function getNodeObject(node) {
   let result = false;
 
-  if (!node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
+  if (!node.sprite && (displayType=='labels' || hightlightNodes.has(node))) {
     if (labelDone<labelLoadPerTick) {
-      node.spriteNormal = getSprite(node, "white");
+      node.sprite = getSprite(node, "white");
       labelDone++;
     } else {
       labelSkipped++;
     }
   }
 
-  if (node.spriteNormal && (displayType=='labels' || hightlightNodes.has(node))) {
-    result = node.spriteNormal;
+  if (node.sprite && (displayType=='labels' || hightlightNodes.has(node))) {
+    result = node.sprite;
+    node.sprite.material.color.set(0xffffff);
   }
 
-  if (!node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
-    if (labelDone<labelLoadPerTick) {
-      node.spriteSelected = getSprite(node, "green");
-      labelDone++;
-    } else {
-      labelSkipped++;
-    }
-  }
-
-  if (node.spriteSelected && (displayType == 'labels' && hightlightNodes.has(node))) {
-    result = node.spriteSelected;
+  if (node.sprite && (displayType == 'labels' && hightlightNodes.has(node))) {
+    result = node.sprite;
+    node.sprite.material.color.set(0x00ff00);
   }
 
   return result;
@@ -532,4 +532,30 @@ function updateHighlight() {
     .linkWidth(Graph.linkWidth())
     .nodeThreeObject(Graph.nodeThreeObject())
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
+}
+
+let gayModeRunning = false;
+function gayMode(init) {
+  let currentHSL = {};
+  for (let nodeKey in nodes) {
+    let node = nodes[nodeKey];
+    if (node.__threeObj) {
+      let nextHSL;
+      if (init) {
+        nextHSL = (((node.x+node.y+node.z)/100)%100)/100;
+      } else {
+        node.__threeObj.material.color.getHSL(currentHSL);
+        nextHSL = currentHSL.h + 0.05;
+      }
+
+      while (nextHSL>=1) nextHSL -= 1;
+
+      node.__threeObj.material.color.setHSL(nextHSL, 1, 0.5);
+    }
+  }
+
+  if (!init || !gayModeRunning) {
+    gayModeRunning = true;
+    setTimeout(gayMode, 100);
+  }
 }

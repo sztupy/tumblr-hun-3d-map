@@ -229,8 +229,6 @@
         _this._fontWeight = 'normal';
         _this._canvas = document.createElement('canvas');
 
-        _this._genCanvas();
-
         return _this;
       }
 
@@ -241,8 +239,6 @@
         },
         set: function set(text) {
           this._text = text;
-
-          this._genCanvas();
         }
       }, {
         key: "textHeight",
@@ -251,8 +247,6 @@
         },
         set: function set(textHeight) {
           this._textHeight = textHeight;
-
-          this._genCanvas();
         }
       }, {
         key: "color",
@@ -261,8 +255,6 @@
         },
         set: function set(color) {
           this._color = color;
-
-          this._genCanvas();
         }
       }, {
         key: "backgroundColor",
@@ -271,8 +263,6 @@
         },
         set: function set(color) {
           this._backgroundColor = color;
-
-          this._genCanvas();
         }
       }, {
         key: "padding",
@@ -281,8 +271,6 @@
         },
         set: function set(padding) {
           this._padding = padding;
-
-          this._genCanvas();
         }
       }, {
         key: "borderWidth",
@@ -291,8 +279,6 @@
         },
         set: function set(borderWidth) {
           this._borderWidth = borderWidth;
-
-          this._genCanvas();
         }
       }, {
         key: "borderRadius",
@@ -301,8 +287,6 @@
         },
         set: function set(borderRadius) {
           this._borderRadius = borderRadius;
-
-          this._genCanvas();
         }
       }, {
         key: "borderColor",
@@ -311,8 +295,6 @@
         },
         set: function set(borderColor) {
           this._borderColor = borderColor;
-
-          this._genCanvas();
         }
       }, {
         key: "fontFace",
@@ -321,8 +303,6 @@
         },
         set: function set(fontFace) {
           this._fontFace = fontFace;
-
-          this._genCanvas();
         }
       }, {
         key: "fontSize",
@@ -331,8 +311,6 @@
         },
         set: function set(fontSize) {
           this._fontSize = fontSize;
-
-          this._genCanvas();
         }
       }, {
         key: "fontWeight",
@@ -341,8 +319,6 @@
         },
         set: function set(fontWeight) {
           this._fontWeight = fontWeight;
-
-          this._genCanvas();
         }
       }, {
         key: "strokeWidth",
@@ -351,8 +327,6 @@
         },
         set: function set(strokeWidth) {
           this._strokeWidth = strokeWidth;
-
-          this._genCanvas();
         }
       }, {
         key: "strokeColor",
@@ -361,12 +335,10 @@
         },
         set: function set(strokeColor) {
           this._strokeColor = strokeColor;
-
-          this._genCanvas();
         }
       }, {
-        key: "_genCanvas",
-        value: function _genCanvas() {
+        key: "genCanvas",
+        value: function genCanvas() {
           var _this2 = this;
 
           var canvas = this._canvas;
