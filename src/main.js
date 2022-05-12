@@ -459,12 +459,13 @@ function onNodeClick(node) {
 // generate label for a node for a specific color
 function getSprite(node, color) {
   let sprite = new SpriteText(node.name);
-  sprite.backgroundColor = color;
-  sprite.color = "black";
-  sprite.textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30)/10;
-  sprite.padding = 0.5;
-  sprite.borderWidth = 0.2;
-  sprite.borderColor = "black";
+  sprite._backgroundColor = color;
+  sprite._color = "black";
+  sprite._textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30)/10;
+  sprite._padding = 0.5;
+  sprite._borderWidth = 0.2;
+  sprite._borderColor = "black";
+  sprite._genCanvas();
 
   return sprite;
 }
