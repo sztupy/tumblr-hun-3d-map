@@ -327,8 +327,12 @@ for (let blog of availableBlogs) {
   const child = document.createElement("a");
   child.href="#";
   child.textContent = blog.name;
+  if (nodeData.find(node => node.id == blog.id)) {
+    child.classList.add("top-blog");
+  }
   child.onclick = (event) => {
     onNodeClick(blog.id);
+    child.classList.add("top-blog");
     searchBox.style.display = "none";
     controls.style.display = "block";
     event.preventDefault();

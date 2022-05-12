@@ -46,25 +46,30 @@
         flex: 1 1 auto;
         text-align:center;
       }
-      #search-values a {
-        padding: 0.2em;
-        font-size: 1.5vmax;
-        border: 1px solid black;
-      }
       #search-alphabet a {
         display: inline-block;
         padding: 0.2em;
       }
-      #search-values a.top-blog {
-        background-color: black;
-        color: white;
-        border: 1px solid white;
-      }
+
       #search a {
         display: block;
         color: black;
         text-decoration: none;
       }
+
+      #search-values a {
+        padding: 0.2em;
+        font-size: 1.5vmax;
+        background-color: black;
+        color: white;
+        border: 1px solid white;
+      }
+      #search-values a.top-blog {
+        background-color: white;
+        color: black;
+        border: 1px solid black;
+      }
+
       #3d-graph {
         touch-action: none;
       }
@@ -88,8 +93,8 @@
   </head>
   <body>
     <div id="controls">
-      <a id="search-open" href="#">🔎</a>
-      <a id="zoom-out" href="#">🌎</a>
+      <a id="search-open" href="#" title="Kereső">🔎</a>
+      <a id="zoom-out" href="#" title="Minden megjelenítése">🌎</a>
     </div>
     <div id="search">
       <div id="search-alphabet"></div>
