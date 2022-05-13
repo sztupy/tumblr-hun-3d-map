@@ -154,6 +154,10 @@ function getSystemNode(id) {
   if (element) {
     element.classList.add('top-blog');
   }
+  element = document.getElementById(`top-blog-${id}`);
+  if (element) {
+    element.classList.add('top-blog');
+  }
 
   return [true, newNode];
 }
@@ -277,34 +281,31 @@ function addToSystem(focusBlogId, options = {}) {
     }
   }
   if (changed && !options.skipUpdate) {
-    Graph.graphData(initData);
     runClustering(true);
+    Graph.graphData(initData);
   }
 
   return changed;
 }
 
-function setCluster(node, cluster, override = false) {
-  if (override && node.cluster === cluster) return;
-  if (!override && node.cluster !== null) return;
+function setCluster(node, cluster) {
+  if (node.cluster !== null) return;
 
   node.cluster = cluster;
-  node.neighborsFrom.forEach(n => setCluster(n, cluster, override));
-  node.neighborsTo.forEach(n => setCluster(n, cluster, override));
+  node.neighborsFrom.forEach(n => setCluster(n, cluster));
+  node.neighborsTo.forEach(n => setCluster(n, cluster));
 }
 
-function runClustering(override) {
-  let currentCluster = 1;
-  if (!override) {
-    for (let node of nodeData) {
-      node.cluster = null;
-    }
+function runClustering() {
+  let currentCluster = 0;
+  for (let node of nodeData) {
+    node.cluster = null;
   }
 
   for (let node of nodeData) {
-    if (node.cluster === null || node.cluster >= currentCluster) {
-      setCluster(node, currentCluster, override);
+    if (node.cluster === null) {
       currentCluster+=1;
+      setCluster(node, currentCluster);
     }
   }
   console.log("Clusters found: " + currentCluster);
@@ -366,6 +367,22 @@ document.getElementById("gay-mode").onclick = function(e) {
   gayMode(true);
   e.preventDefault();
 }
+
+document.getElementById("reset-graph").onclick = function(e) {
+  nodeData.forEach(node => {
+    node.x=Math.random()*100;
+    node.y=Math.random()*100;
+    node.z=Math.random()*100;
+  });
+  Graph.graphData(initData);
+  e.preventDefault();
+}
+
+document.getElementById("reheat-graph").onclick = function(e) {
+  Graph.d3ReheatSimulation();
+  e.preventDefault();
+}
+
 
 const searchBoxOpener = document.getElementById("search-open");
 searchBoxOpener.onclick = function(e) {
@@ -517,7 +534,6 @@ let hoverNode = null;
 // handle clicking on nodes, including both opening up the node, and making it the selected one
 function onNodeClick(node) {
   let nodeAdded = false;
-  autoFocus = node.id;
 
   if (Number.isInteger(node)) {
     let nodeData = initData.nodes.find(n => n.id == node);
@@ -529,31 +545,17 @@ function onNodeClick(node) {
     }
   }
 
-  if (node && hoverNode === node) {
-    if (!node.openedDepth) {
-      nodeAdded = addToSystem(node.id);
-      node.openedDepth = 1;
-    } else {
-      node.openedDepth+=1;
-      nodeAdded = addToSystem(node.id, { topElems: node.openedDepth });
-    }
-  }
-
-  if (!node.z) {
-    node.z = 0;
-  }
-
-  zoomTo(node, 1000);
   fillNodeDetails(node);
-
-  if (!node && !highlightLinks.size) return;
-  if (node && hoverNode === node && !nodeAdded) return;
 
   hightlightNodes.clear();
   highlightLinks.clear();
   highlightLinksTo.clear();
   highlightLinksBoth.clear();
   if (node) {
+    if (!node.z) {
+      node.z = 0;
+    }
+
     hightlightNodes.add(node);
     node.neighborsTo.forEach(node => hightlightNodes.add(node));
     node.neighborsFrom.forEach(node => hightlightNodes.add(node));
@@ -618,7 +620,7 @@ function colorizeNode(node) {
   }
 
   if (settings.colorNodes && node.cluster) {
-    obj.material.color.setHSL((node.cluster % 20)/20, 1, 0.75);
+    obj.material.color.setHSL((node.cluster % 20)/20, 0.5, 0.75);
   } else {
     obj.material.color.setHSL(0, 0, 0.5);
   }
@@ -711,6 +713,7 @@ function getNodeLabel(node) {
   return node.name;
 }
 
+// node modification tools
 function fillNodeDetails(node) {
   let details = '';
   details += `Name: ${node.name} <br>`;
@@ -718,5 +721,57 @@ function fillNodeDetails(node) {
   details += `Cluster: ${node.cluster} <br>`;
   details += `Neighbours: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
 
-  document.getElementById('node-info').innerHTML = details;
+  document.getElementById('node-info-text').innerHTML = details;
+  document.getElementById('node-info-zoom').onclick = (e) => { autoFocus = node.id; e.preventDefault() };
+  document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
+  document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
+  document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
+}
+
+function openNode(node, includeNeighbors = false, skipUpdate = false) {
+  if (includeNeighbors) {
+    var neighborsset = new Set(node.neighborsTo);
+    node.neighborsFrom.forEach(neighbor => neighborsset.add(neighbor));
+    neighborsset.forEach(neighbor => openNode(neighbor, false, true));
+  }
+
+  if (!node.openedDepth) {
+    addToSystem(node.id, { skipUpdate: skipUpdate });
+    node.openedDepth = 1;
+  } else {
+    node.openedDepth+=1;
+    addToSystem(node.id, { topElems: node.openedDepth, skipUpdate: skipUpdate });
+  }
+  if (!skipUpdate)
+    onNodeClick(node);
+
+  if (includeNeighbors) {
+    runClustering();
+    Graph.graphData(initData);
+    updateHighlight();
+  }
+}
+
+function deleteNode(node) {
+  if (!node) return;
+  document.getElementById(`top-blog-${node.id}`).classList.remove('top-blog');
+  document.getElementById(`blog-${node.id}`).classList.remove('top-blog');
+
+  node.links.forEach(link => {
+    link.source.links.delete(link);
+    link.target.links.delete(link);
+
+    link.source.neighborsTo.delete(link.target);
+    link.target.neighborsFrom.delete(link.source);
+
+    delete links[link.source.id][link.target.id];
+    linkData.splice(linkData.indexOf(link), 1);
+  });
+
+  delete nodes[node.id];
+  nodeData.splice(nodeData.indexOf(node),1);
+
+  Graph.graphData(initData);
+  runClustering();
+  updateHighlight();
 }

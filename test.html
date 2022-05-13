@@ -99,6 +99,16 @@
         padding: 0.2em;
         z-index: 1;
       }
+      #node-controls {
+        text-align: right;
+      }
+      #node-controls a {
+        display: inline-block;
+        padding: 0.2em;
+        border: 1px solid black;
+        font-size: 2vmax;
+        text-decoration: none;
+      }
     </style>
   </head>
   <body>
@@ -106,12 +116,25 @@
       <a id="search-open" href="#" title="Kereső">🔎</a>
       <a id="zoom-out" href="#" title="Minden megjelenítése">🌎</a>
       <a id="gay-mode" href="#" title="Buzítóapparát!">🌈</a>
+      <a id="reheat-graph" href="#" title="Gráfszimuláció újramelegítése">🔥</a>
+      <a id="reset-graph" href="#" title="Gráfszimuláció újraindítása">✨</a>
+
     </div>
     <div id="search">
       <div id="search-alphabet"></div>
       <div id="search-values"><span id="alphabet-top"></span></div>
     </div>
-    <div id="node-info"></div>
+    <div id="node-info">
+      <div id="node-info-text">
+
+      </div>
+      <div id="node-controls">
+        <a id="node-info-zoom" href="#" title="Blog kinagyítása">🔎</a>
+        <a id="node-info-add" href="#" title="Kapcsolatok további kibontása">➕</a>
+        <a id="node-info-add-all" href="#" title="Kapcsolatok és szomszédok további kibontása">✖️</a>
+        <a id="node-info-delete" href="#" title="Blog törlése a gráfról">🗑️</a>
+      </div>
+    </div>
 
     <div id="3d-graph"></div>
     <div id="loading"><img src="img/loading-cat.gif"></div>
