@@ -465,6 +465,7 @@ window.onload = function() {
     .linkColor(getLinkColor)
     .nodeColor(node => colorizeNode(node))
     .nodeVal(node => node.totalVal)
+    .nodeRelSize(1)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
