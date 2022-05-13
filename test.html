@@ -94,11 +94,17 @@
       }
       #node-info {
         position: absolute;
+        display: none;
         right:0;
         bottom: 0;
         background-color: white;
         padding: 0.2em;
         z-index: 1;
+      }
+      #node-info-exit {
+        cursor: pointer;
+        right: 1em;
+        position: absolute;
       }
       #node-controls {
         text-align: right;
@@ -127,6 +133,7 @@
       <div id="search-values"><span id="alphabet-top"></span></div>
     </div>
     <div id="node-info">
+      <div id="node-info-exit" title="Kilépés">[X]</div>
       <div id="node-info-text">
 
       </div>

@@ -463,7 +463,7 @@ const Graph = ForceGraph3D({ controlType: settings.controlType })(elem)
 window.onload = function() {
   Graph.enableNodeDrag(false)
     .linkColor(getLinkColor)
-    .nodeColor(() => `rgb(255,255,255,1)`)
+    .nodeColor(node => colorizeNode(node))
     .nodeVal(node => node.totalVal)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
@@ -672,8 +672,6 @@ let hoverNode = null;
 
 // handle clicking on nodes, including both opening up the node, and making it the selected one
 function onNodeClick(node) {
-  let nodeAdded = false;
-
   if (Number.isInteger(node)) {
     let nodeData = initData.nodes.find(n => n.id == node);
     if (!nodeData) {
@@ -683,8 +681,6 @@ function onNodeClick(node) {
       node = nodeData;
     }
   }
-
-  fillNodeDetails(node);
 
   hightlightNodes.clear();
   highlightLinks.clear();
@@ -703,8 +699,8 @@ function onNodeClick(node) {
     Array.from(node.links).filter(link => link.target == node).forEach(link => link.source.neighborsFrom.has(node) ? highlightLinksBoth.add(link) : null);
   }
 
+  fillNodeDetails(node);
   hoverNode = node || null;
-
   updateHighlight();
 }
 
@@ -744,28 +740,42 @@ function getNodeObject(node) {
   return result;
 }
 
+let colorObject = TinyColor("#00ff00");
+
 function colorizeNode(node) {
   let obj = node.sprite || node.__threeObj;
 
-  if (!obj) return;
+  let hsl = { h: 0, s: 0, l: 1 };
 
   if (hightlightNodes.has(node)) {
     if (settings.colorNodes && node.cluster) {
-      obj.material.color.setHSL((node.cluster % 20)/20, 1, 0.5);
+      hsl.h = (node.cluster % 20)/20;
+      hsl.s = 1;
+      hsl.l = 0.5;
     } else {
-      obj.material.color.setHSL(0, 0, 1);
+      hsl.h = 0;
+      hsl.s = 0;
+      hsl.l = 1;
     }
-    return;
+  } else {
+    if (settings.colorNodes && node.cluster) {
+      hsl.h = (node.cluster % 20)/20;
+      hsl.s = 1;
+      hsl.l = 0.75;
+    } else {
+      hsl.h = 0;
+      hsl.s = 0;
+      hsl.l = 0.5;
+    }
   }
 
-  if (settings.colorNodes && node.cluster) {
-    obj.material.color.setHSL((node.cluster % 20)/20, 0.5, 0.75);
-  } else {
-    obj.material.color.setHSL(0, 0, 0.5);
+  if (obj) {
+    obj.material.color.setHSL(hsl.h, hsl.s, hsl.l);
   }
+
+  return TinyColor({h: hsl.h*360, s: hsl.s, l: hsl.l, a: 1});
 }
 
-let colorObject = TinyColor("#00ff00");
 // obtain the color of the link
 function getLinkColor(link)
 {
@@ -798,17 +808,7 @@ function updateHighlight() {
     .linkWidth(Graph.linkWidth())
     .nodeThreeObject(Graph.nodeThreeObject())
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
-
-  setTimeout(() => {
-    for (node of nodeData) {
-      colorizeNode(node);
-    }},100);
 }
-
-setTimeout(() => {
-  for (node of nodeData) {
-    colorizeNode(node);
-  }},100);
 
 let gayModeRunning = false;
 function gayMode(init) {
@@ -852,6 +852,7 @@ function getNodeLabel(node) {
   return node.name;
 }
 
+document.getElementById("node-info-exit").onclick = (e) => { fillNodeDetails(null); onNodeClick(null); e.preventDefault(); }
 // node modification tools
 function fillNodeDetails(node) {
   let details = '';
@@ -865,12 +866,15 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
     document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
     document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
+
+    document.getElementById('node-info').style.display = "block";
   } else {
     let prevDefault = (e) => { e.preventDefault() };
     document.getElementById('node-info-zoom').onclick = prevDefault;
     document.getElementById('node-info-add').onclick = prevDefault;
     document.getElementById('node-info-add-all').onclick = prevDefault;
     document.getElementById('node-info-delete').onclick = prevDefault;
+    document.getElementById('node-info').style.display = "none";
   }
 
   document.getElementById('node-info-text').innerHTML = details;
@@ -931,4 +935,5 @@ function deleteNode(node) {
   }
   runClustering();
   updateHighlight();
+  fillNodeDetails(null);
 }
