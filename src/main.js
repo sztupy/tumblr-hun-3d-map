@@ -84,8 +84,6 @@ if (window.location.search) {
       }
     }
   }
-} else {
-  throw new Error();
 }
 
 const linkData = [];
