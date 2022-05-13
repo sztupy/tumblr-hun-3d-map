@@ -65,12 +65,27 @@ if (window.location.search) {
   } else if (search.indexOf('bwlinks') != -1) {
     settings.colorLinks = false;
   }
+  let checkboxColorLinks = document.getElementById('s-colorlinks');
+  checkboxColorLinks.checked = settings.colorLinks;
+  checkboxColorLinks.oninput = function(e) {
+    settings.colorLinks = e.target.checked;
+    updateHighlight();
+    updateSettings();
+  }
 
   if (search.indexOf('colornodes') != -1) {
     settings.colorNodes = true;
   } else if (search.indexOf('bwnodes') != -1) {
     settings.colorNodes = false;
   }
+  let checkboxColorNodes = document.getElementById('s-colornodes');
+  checkboxColorNodes.checked = settings.colorNodes;
+  checkboxColorNodes.oninput = function(e) {
+    settings.colorNodes = e.target.checked;
+    updateHighlight();
+    updateSettings();
+  }
+
 
   let years;
   if (years = search.find(name => name.startsWith('years'))) {
@@ -523,6 +538,29 @@ document.getElementById("reheat-graph").onclick = function(e) {
   e.preventDefault();
 }
 
+document.getElementById("open-stats").onclick = function(e) {
+  document.getElementById("stats").style.display = "flex";
+  controls.style.display = "none";
+  e.preventDefault();
+}
+
+document.getElementById("stats-exit").onclick = function(e) {
+  document.getElementById("stats").style.display = "none";
+  controls.style.display = "block";
+  e.preventDefault();
+}
+
+document.getElementById("open-config").onclick = function(e) {
+  document.getElementById("config").style.display = "flex";
+  controls.style.display = "none";
+  e.preventDefault();
+}
+
+document.getElementById("config-exit").onclick = function(e) {
+  document.getElementById("config").style.display = "none";
+  controls.style.display = "block";
+  e.preventDefault();
+}
 
 const searchBoxOpener = document.getElementById("search-open");
 searchBoxOpener.onclick = function(e) {
@@ -535,7 +573,7 @@ const searchBox = document.getElementById("search");
 const searchValues = document.getElementById("search-values");
 
 for (let i = 0; i < 37; i++) {
-  var child = document.createElement("a");
+  let child = document.createElement("a");
   let char = i < 36 ? i.toString(36) : 'top';
   child.href = "#";
   child.innerHTML = char + " ";
@@ -553,6 +591,17 @@ for (let i = 0; i < 37; i++) {
     document.getElementById("search-alphabet").appendChild(document.createElement("br"));
   }
 }
+
+let child = document.createElement("a");
+child.href = "#";
+child.innerHTML = "[X]";
+child.style.display = "inline";
+child.onclick = function(e) {
+  searchBox.style.display = "none";
+  controls.style.display = "block";
+  e.preventDefault();
+}
+document.getElementById("search-alphabet").appendChild(child);
 
 // top blogs
 let topBlogs = availableBlogs.map(blog => {
@@ -937,4 +986,8 @@ function deleteNode(node) {
   runClustering();
   updateHighlight();
   fillNodeDetails(null);
+}
+
+function updateSettings() {
+
 }

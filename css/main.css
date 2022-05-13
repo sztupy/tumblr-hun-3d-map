@@ -1,0 +1,161 @@
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  font-family: sans-serif;
+}
+
+body {
+  position: relative;
+  background-color: black;
+}
+
+.scene-tooltip {
+  background-color: white;
+  color: black !important;
+  border: 1px solid black;
+}
+
+#controls {
+  position: absolute;
+  top: 0.2em;
+  left: 0.2em;
+  display: block;
+  z-index: 1;
+}
+
+#controls a {
+  display: block;
+  text-decoration: none;
+  font-size: 3vmax;
+  margin: 0.5em;
+}
+
+#search, #stats, #config {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  background-color: white;
+  flex-flow: column;
+}
+
+#stats-exit, #config-exit {
+  flex: 0 1 auto;
+  text-align: right;
+  cursor: pointer;
+  font-size: 2vmax;
+  padding: 0.5em;
+}
+
+#stats-content, #config-content {
+  flex: 1 1 auto;
+  overflow: scroll;
+  font-size: 2vmax;
+  padding: 1em;
+}
+
+#search-alphabet {
+  flex: 0 1 auto;
+  text-align: center;
+  padding-bottom: 0.2em;
+  font-size: 2vmax;
+}
+
+#search-values {
+  overflow: scroll;
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+#search-alphabet a {
+  display: inline-block;
+  padding: 0.2em;
+}
+
+#search a {
+  display: block;
+  color: black;
+  text-decoration: none;
+}
+
+#search-values a {
+  padding: 0.2em;
+  font-size: 1.5vmax;
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+}
+
+#search-values a.top-blog {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+}
+
+#3d-graph {
+  touch-action: none;
+}
+
+#loading {
+  position: absolute;
+  z-index: 2;
+
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  transition: opacity 1s;
+}
+
+#loading img {
+  border-radius: 10%;
+  opacity: 0.75;
+}
+
+#node-info {
+  position: absolute;
+  display: none;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  padding: 0.2em;
+  z-index: 1;
+}
+
+#node-info-exit {
+  cursor: pointer;
+  right: 1em;
+  position: absolute;
+}
+
+#node-controls {
+  text-align: right;
+}
+
+#node-controls a {
+  display: inline-block;
+  padding: 0.2em;
+  border: 1px solid black;
+  font-size: 2vmax;
+  text-decoration: none;
+  margin: 0.5em;
+}
+
+input[type=checkbox] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  vertical-align: text-bottom;
+  width: 2vmax;
+  height: 2vmax;
+  font-size: 2vmax;
+  background-color: #eee;
+}
+
+input[type=checkbox]:checked:after {
+  content: "✖️";
+}
