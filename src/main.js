@@ -1,10 +1,10 @@
 let controlType = 'orbit';
-let displayType = 'spheres';
-let valuesToLoad = 'all';
+let displayType = 'top50';
 let graphType = 'topblog';
 let topElems = 1;
 let labelLoadPerTick = 2500;
 let valuesToLimit = 50;
+let valuesToLoad = ["2019","2020","2021","current"];
 let dimensions = 3;
 let dag = false;
 
@@ -27,19 +27,19 @@ if (window.location.search) {
   } else if (search.indexOf('loader') != -1) {
     displayType = 'labels';
     labelLoadPerTick = 2500;
+  } else if (search.indexOf('top50') != -1) {
+    displayType = 'top50';
+    labelLoadPerTick = 2500;
   } else if (search.indexOf('spheres') != -1) {
     displayType = 'spheres';
     labelLoadPerTick = 100;
   }
 
   if (search.indexOf('full') != -1) {
-    valuesToLoad = 'all';
     valuesToLimit = 0;
-  } else if (search.indexOf('recent') != -1) {
-    valuesToLoad = '2021';
-    valuesToLimit = 0;
+  } else if (search.indexOf('limited') != -1) {
+    valuesToLimit = 25;
   } else if (search.indexOf('minimal') != -1) {
-    valuesToLoad = 'all';
     valuesToLimit = 50;
   }
 
@@ -55,6 +55,21 @@ if (window.location.search) {
     dag = 'radialin';
   } else if (search.indexOf('dar') != -1) {
     dag = 'radialout';
+  }
+
+  let years;
+  if (years = search.find(name => name.startsWith('years'))) {
+    let load = [];
+    years.split('_').forEach(year => {
+      if (parseInt(year)>=10 && parseInt(year)<22)
+        load.push("20"+year);
+      if (parseInt(year)==22)
+        load.push('current');
+    });
+
+    if (load.length > 0) {
+      valuesToLoad = load.filter((v, i, a) => a.indexOf(v) === i);
+    }
   }
 
   let topblog;
@@ -85,7 +100,7 @@ const initData = {
 
 const availableBlogIds = new Set();
 let maxMaxValue = 0;
-const yearData = tumblrData.years[valuesToLoad];
+const allData = tumblrData.years['all'];
 const present = {};
 
 // loads a node from the tumblr database into the graph system
@@ -152,20 +167,40 @@ function addToSystem(focusBlogId, options = {}) {
   options.valuesToLimit ||= 0;
 
   let changed = false;
-  for (var sourceBlog in yearData) {
-    const sourceData = yearData[sourceBlog];
+  for (var sourceBlog in allData) {
+    let destinationBlogs = {};
     const source = parseInt(sourceBlog);
-    availableBlogIds.add(source);
 
-    let destinations = [];
+    for (var year of valuesToLoad) {
+      let yearData = tumblrData.years[year];
+      const sourceData = yearData[sourceBlog];
+      if (!sourceData) {
+        continue;
+      }
 
-    for (var destinationBlog in sourceData) {
-      const destinationData = sourceData[destinationBlog];
-      const destination = parseInt(destinationBlog);
-      availableBlogIds.add(destination);
+      availableBlogIds.add(source);
 
-      destinations.push({id: destination, blog: destinationBlog, value: destinationData[1]});
+      for (var destinationBlog in sourceData) {
+        const destinationData = sourceData[destinationBlog];
+        const destination = parseInt(destinationBlog);
+        availableBlogIds.add(destination);
+
+        if (destinationBlogs[destination]) {
+          destinationBlogs[destination].value += destinationData[1];
+          destinationBlogs[destination].data[0] += destinationData[0];
+          destinationBlogs[destination].data[1] += destinationData[1];
+        } else {
+          destinationBlogs[destination] = {
+            id: destination,
+            blog: destinationBlog,
+            value: destinationData[1],
+            data: [ destinationData[0], destinationData[1] ]
+          }
+        }
+      }
     }
+
+    let destinations = Object.values(destinationBlogs);
 
     destinations.sort((a, b) => b.value - a.value);
     if (options.valuesToLimit > 0) {
@@ -175,7 +210,7 @@ function addToSystem(focusBlogId, options = {}) {
 
     for (destData of destinations) {
       const destinationBlog = destData.blog;
-      const destinationData = sourceData[destinationBlog];
+      const destinationData = destData.data;
       const destination = parseInt(destinationBlog);
       if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
         continue;
@@ -232,6 +267,7 @@ const Graph = ForceGraph3D({ controlType: controlType })(elem)
 window.onload = function() {
   Graph.enableNodeDrag(false)
     .linkColor(getLinkColor)
+    .nodeColor(() => `rgb(255,255,255,1)`)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
@@ -307,10 +343,12 @@ for (let i = 0; i < 37; i++) {
 // top blogs
 let topBlogs = availableBlogs.map(blog => {
   let node = nodeData.find(node => node.id == blog.id);
-  return { name: blog.name, value: node ? node.val : 0, id: blog.id };
+  return { name: blog.name, node: node, value: node ? node.val : 0, id: blog.id };
 }).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
 
 for (let blog of topBlogs) {
+  if (!blog.node) continue;
+  blog.node.topBlog = true;
   const child = document.createElement("a");
   child.href="#";
   child.textContent = blog.name;
@@ -481,7 +519,7 @@ function getSprite(node) {
 function getNodeObject(node) {
   let result = false;
 
-  if (!node.sprite && (displayType=='labels' || hightlightNodes.has(node))) {
+  if (!node.sprite && (displayType=='labels' || hightlightNodes.has(node) || (displayType=='top50' && node.topBlog))) {
     if (labelDone<labelLoadPerTick) {
       node.sprite = getSprite(node, "white");
       labelDone++;
@@ -490,15 +528,19 @@ function getNodeObject(node) {
     }
   }
 
-  if (node.sprite && (displayType=='labels' || hightlightNodes.has(node))) {
+  if (node.sprite) {
     result = node.sprite;
-    node.sprite.material.color.set(0xffffff);
+
+    if (displayType=='labels' || (displayType=='top50' && node.topBlog)) {
+      node.sprite.material.color.set(0xffffff);
+    }
+
+    if (hightlightNodes.has(node)) {
+      result = node.sprite;
+      node.sprite.material.color.set(0x00ff00);
+    }
   }
 
-  if (node.sprite && (displayType == 'labels' && hightlightNodes.has(node))) {
-    result = node.sprite;
-    node.sprite.material.color.set(0x00ff00);
-  }
 
   return result;
 }
