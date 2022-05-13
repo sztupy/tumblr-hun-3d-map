@@ -91,6 +91,14 @@
         border-radius: 10%;
         opacity: 0.75;
       }
+      #node-info {
+        position: absolute;
+        right:0;
+        bottom: 0;
+        background-color: white;
+        padding: 0.2em;
+        z-index: 1;
+      }
     </style>
   </head>
   <body>
@@ -103,6 +111,7 @@
       <div id="search-alphabet"></div>
       <div id="search-values"><span id="alphabet-top"></span></div>
     </div>
+    <div id="node-info"></div>
 
     <div id="3d-graph"></div>
     <div id="loading"><img src="img/loading-cat.gif"></div>

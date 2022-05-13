@@ -1,12 +1,16 @@
-let controlType = 'orbit';
-let displayType = 'top50';
-let graphType = 'topblog';
-let topElems = 1;
-let labelLoadPerTick = 2500;
-let valuesToLimit = 50;
-let valuesToLoad = ["2019","2020","2021","current"];
-let dimensions = 3;
-let dag = false;
+const settings = {
+  controlType: 'orbit',
+  displayType: 'top50',
+  graphType: 'topblog',
+  topElems: 1,
+  labelLoadPerTick: 2500,
+  valuesToLimit: 50,
+  valuesToLoad: ["2019","2020","2021","current"],
+  dimensions: 3,
+  dag: false,
+  colorLinks: false,
+  colorNodes: false
+}
 
 // load up initial configuration from the URL
 if (window.location.search) {
@@ -14,47 +18,59 @@ if (window.location.search) {
 
   console.log(search);
   if (search.indexOf('fly') != -1) {
-    controlType = 'fly';
+    settings.controlType = 'fly';
   } else if (search.indexOf('orbit') != -1) {
-    controlType = 'orbit';
+    settings.controlType = 'orbit';
   } else if (search.indexOf('trackball') != -1) {
-    controlType = 'trackball';
+    settings.controlType = 'trackball';
   }
 
   if (search.indexOf('labels') != -1) {
-    displayType = 'labels';
-    labelLoadPerTick = 10000000;
+    settings.displayType = 'labels';
+    settings.labelLoadPerTick = 10000000;
   } else if (search.indexOf('loader') != -1) {
-    displayType = 'labels';
-    labelLoadPerTick = 2500;
+    settings.displayType = 'labels';
+    settings.labelLoadPerTick = 2500;
   } else if (search.indexOf('top50') != -1) {
-    displayType = 'top50';
-    labelLoadPerTick = 2500;
+    settings.displayType = 'top50';
+    settings.labelLoadPerTick = 2500;
   } else if (search.indexOf('spheres') != -1) {
-    displayType = 'spheres';
-    labelLoadPerTick = 100;
+    settings.displayType = 'spheres';
+    settings.labelLoadPerTick = 100;
   }
 
   if (search.indexOf('full') != -1) {
-    valuesToLimit = 0;
+    settings.valuesToLimit = 0;
   } else if (search.indexOf('limited') != -1) {
-    valuesToLimit = 25;
+    settings.valuesToLimit = 25;
   } else if (search.indexOf('minimal') != -1) {
-    valuesToLimit = 50;
+    settings.valuesToLimit = 50;
   }
 
   if (search.indexOf('2d') != -1) {
-    dimensions = 2;
+    settings.dimensions = 2;
   } else if (search.indexOf('3d') != -1) {
-    dimensions = 3;
+    settings.dimensions = 3;
   }
 
-  if (search.indexOf('dag') != -1) {
+  if (search.indexOf('settings.dag') != -1) {
     dag = 'zin';
   } else if (search.indexOf('rad') != -1) {
     dag = 'radialin';
   } else if (search.indexOf('dar') != -1) {
     dag = 'radialout';
+  }
+
+  if (search.indexOf('colorlinks') != -1) {
+    settings.colorLinks = true;
+  } else if (search.indexOf('bwlinks') != -1) {
+    settings.colorLinks = false;
+  }
+
+  if (search.indexOf('colornodes') != -1) {
+    settings.colorNodes = true;
+  } else if (search.indexOf('bwnodes') != -1) {
+    settings.colorNodes = false;
   }
 
   let years;
@@ -68,32 +84,32 @@ if (window.location.search) {
     });
 
     if (load.length > 0) {
-      valuesToLoad = load.filter((v, i, a) => a.indexOf(v) === i);
+      settings.valuesToLoad = load.filter((v, i, a) => a.indexOf(v) === i);
     }
   }
 
   let topblog;
   if (topblog = search.find(name => name.startsWith('topblog'))) {
-    graphType = 'topblog';
-    topElems = 1;
+    settings.graphType = 'topblog';
+    settings.topElems = 1;
     let match;
     if (match = topblog.match(/topblog_(\d+)/)) {
-      topElems = parseInt(match[1]);
-      if (topElems<=0 || topElems>100) {
-        topElems = 1;
+      settings.topElems = parseInt(match[1]);
+      if (settings.topElems<=0 || settings.topElems>100) {
+        settings.topElems = 1;
       }
     }
   }
 
   let spantree;
   if (topblog = search.find(name => name.startsWith('spantree'))) {
-    graphType = 'spantree';
-    topElems = 1;
+    settings.graphType = 'spantree';
+    settings.topElems = 1;
     let match;
     if (match = topblog.match(/spantree_(\d+)/)) {
-      topElems = parseInt(match[1]);
-      if (topElems<=0 || topElems>100) {
-        topElems = 1;
+      settings.topElems = parseInt(match[1]);
+      if (settings.topElems<=0 || settings.topElems>100) {
+        settings.topElems = 1;
       }
     }
   }
@@ -127,7 +143,8 @@ function getSystemNode(id) {
     neighborsTo: new Set(),
     neighborsFrom: new Set(),
     links: new Set(),
-    cluster: null
+    cluster: null,
+    openedDepth: null,
   };
 
   nodes[id] = newNode;
@@ -174,7 +191,7 @@ function getSystemLink(source, target, data) {
   return [true, newLink];
 }
 
-// add a new node to the graph focused on the selection. It will add all nodes regardless of the current valuesToLimit setting
+// add a new node to the graph focused on the selection. It will add all nodes regardless of the current settings.valuesToLimit setting
 function addToSystem(focusBlogId, options = {}) {
   options.valuesToLimit ||= 0;
 
@@ -183,7 +200,7 @@ function addToSystem(focusBlogId, options = {}) {
     let destinationBlogs = {};
     const source = parseInt(sourceBlog);
 
-    for (var year of valuesToLoad) {
+    for (var year of settings.valuesToLoad) {
       let yearData = tumblrData.years[year];
       const sourceData = yearData[sourceBlog];
       if (!sourceData) {
@@ -218,7 +235,7 @@ function addToSystem(focusBlogId, options = {}) {
     if (options.valuesToLimit > 0) {
       destinations = destinations.filter((d) => d.value >= options.valuesToLimit);
     }
-    destinations = destinations.slice(0, topElems);
+    destinations = destinations.slice(0, options.topElems || settings.topElems);
 
     for (destData of destinations) {
       const destinationBlog = destData.blog;
@@ -251,7 +268,7 @@ function addToSystem(focusBlogId, options = {}) {
         if (original.linkDirection != 'both') {
           original.linkDirection = 'both';
           changed = true;
-          if (!dag) getSystemLink(source, destination, destinationData);
+          if (!settings.dag) getSystemLink(source, destination, destinationData);
         }
       } else {
         getSystemLink(source, destination, destinationData);
@@ -261,6 +278,7 @@ function addToSystem(focusBlogId, options = {}) {
   }
   if (changed && !options.skipUpdate) {
     Graph.graphData(initData);
+    runClustering(true);
   }
 
   return changed;
@@ -275,15 +293,17 @@ function setCluster(node, cluster, override = false) {
   node.neighborsTo.forEach(n => setCluster(n, cluster, override));
 }
 
-function runClustering() {
+function runClustering(override) {
   let currentCluster = 1;
-  for (let node of nodeData) {
-    node.cluster = null;
+  if (!override) {
+    for (let node of nodeData) {
+      node.cluster = null;
+    }
   }
 
   for (let node of nodeData) {
-    if (node.cluster === null) {
-      setCluster(node, currentCluster, false);
+    if (node.cluster === null || node.cluster >= currentCluster) {
+      setCluster(node, currentCluster, override);
       currentCluster+=1;
     }
   }
@@ -291,15 +311,15 @@ function runClustering() {
 }
 
 // initial graph loading, only loading nodes and edges above a certain threshold
-addToSystem(null, { valuesToLimit: valuesToLimit, skipUpdate: true });
-runClustering();
+addToSystem(null, { valuesToLimit: settings.valuesToLimit, skipUpdate: true });
+runClustering(false);
 
 const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
 
 const elem = document.getElementById('3d-graph');
 
 // set up the Graph object
-const Graph = ForceGraph3D({ controlType: controlType })(elem)
+const Graph = ForceGraph3D({ controlType: settings.controlType })(elem)
 
 window.onload = function() {
   Graph.enableNodeDrag(false)
@@ -311,15 +331,15 @@ window.onload = function() {
     .linkDirectionalParticleWidth(0.5)
     .linkOpacity(1)
     .nodeResolution(1)
-    .nodeLabel(node => node.name)
-    .numDimensions(dimensions)
+    .nodeLabel(getNodeLabel)
+    .numDimensions(settings.dimensions)
     .nodeThreeObject(getNodeObject)
     .onNodeClick(onNodeClick)
     .onLinkClick(link => onNodeClick(link.source))
     .graphData(initData);
 
-  if (dag) {
-    Graph.dagMode(dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
+  if (settings.dag) {
+    Graph.dagMode(settings.dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
   }
 };
 
@@ -437,6 +457,7 @@ function zoomTo(node, speed = 1000) {
 // run the autoFocus handler, that will make sure the camera is positioned nicely on the object that should be
 // focused on, until there is any keyboard, mouse or touch activity
 let autoFocus = 'all';
+let lastSelectedNode = null;
 function runZoom() {
   if (autoFocus == 'all') {
     Graph.zoomToFit(400);
@@ -496,6 +517,8 @@ let hoverNode = null;
 // handle clicking on nodes, including both opening up the node, and making it the selected one
 function onNodeClick(node) {
   let nodeAdded = false;
+  autoFocus = node.id;
+
   if (Number.isInteger(node)) {
     let nodeData = initData.nodes.find(n => n.id == node);
     if (!nodeData) {
@@ -507,7 +530,13 @@ function onNodeClick(node) {
   }
 
   if (node && hoverNode === node) {
-    nodeAdded = addToSystem(node.id);
+    if (!node.openedDepth) {
+      nodeAdded = addToSystem(node.id);
+      node.openedDepth = 1;
+    } else {
+      node.openedDepth+=1;
+      nodeAdded = addToSystem(node.id, { topElems: node.openedDepth });
+    }
   }
 
   if (!node.z) {
@@ -515,7 +544,7 @@ function onNodeClick(node) {
   }
 
   zoomTo(node, 1000);
-  autoFocus = node.id;
+  fillNodeDetails(node);
 
   if (!node && !highlightLinks.size) return;
   if (node && hoverNode === node && !nodeAdded) return;
@@ -556,8 +585,8 @@ function getSprite(node) {
 function getNodeObject(node) {
   let result = false;
 
-  if (!node.sprite && (displayType=='labels' || hightlightNodes.has(node) || (displayType=='top50' && node.topBlog))) {
-    if (labelDone<labelLoadPerTick) {
+  if (!node.sprite && (settings.displayType=='labels' || hightlightNodes.has(node) || (settings.displayType=='top50' && node.topBlog))) {
+    if (labelDone<settings.labelLoadPerTick) {
       node.sprite = getSprite(node, "white");
       labelDone++;
     } else {
@@ -580,18 +609,18 @@ function colorizeNode(node) {
   if (!obj) return;
 
   if (hightlightNodes.has(node)) {
-    if (node.cluster) {
+    if (settings.colorNodes && node.cluster) {
       obj.material.color.setHSL((node.cluster % 20)/20, 1, 0.5);
     } else {
-      obj.material.color.setHSL(0, 0, 0.75);
+      obj.material.color.setHSL(0, 0, 1);
     }
     return;
   }
 
-  if (node.cluster) {
+  if (settings.colorNodes && node.cluster) {
     obj.material.color.setHSL((node.cluster % 20)/20, 1, 0.75);
   } else {
-    obj.material.color.setHSL(0, 0, 1);
+    obj.material.color.setHSL(0, 0, 0.5);
   }
 }
 
@@ -599,14 +628,11 @@ let colorObject = TinyColor("#00ff00");
 // obtain the color of the link
 function getLinkColor(link)
 {
-  if (link.source.cluster) {
-    return TinyColor({h: (link.source.cluster % 20)/20*360, s: 0.75, l: 0.5, a: 0.5});
-  }
   if (link.linkDirection == 'both') {
     if (highlightLinksBoth.has(link)) {
       return 'rgba(255,0,0,0.8)';
     } else {
-      return 'rgba(255,0,0,0.2)';
+      return 'rgba(255,0,0,0.5)';
     }
   }
   if (highlightLinks.has(link)) {
@@ -618,16 +644,19 @@ function getLinkColor(link)
     }
     return 'rgba(0,255,0,0.5)';
   }
-  return 'rgba(255,255,255,0.2)';
+  if (settings.colorLinks && link.source.cluster) {
+    return TinyColor({h: (link.source.cluster % 20)/20*360, s: 0.75, l: 0.5, a: 0.25});
+  }
+  return 'rgba(255,255,255,0.5)';
 }
 
 // trigger update of highlighted objects in scene
 function updateHighlight() {
-  //Graph
-    // .linkColor(Graph.linkColor())
-    // .linkWidth(Graph.linkWidth())
-    // .nodeThreeObject(Graph.nodeThreeObject())
-    // .linkDirectionalParticles(Graph.linkDirectionalParticles());
+  Graph
+    .linkColor(Graph.linkColor())
+    .linkWidth(Graph.linkWidth())
+    .nodeThreeObject(Graph.nodeThreeObject())
+    .linkDirectionalParticles(Graph.linkDirectionalParticles());
 
   setTimeout(() => {
     for (node of nodeData) {
@@ -643,6 +672,7 @@ setTimeout(() => {
 let gayModeRunning = false;
 function gayMode(init) {
   if (init) {
+    // this will enable a hack in 3d-force-graph to disable colour caching, otherwise this would not work
     window.GAY_MODE = true;
     Graph.linkColor(Graph.linkColor());
   }
@@ -666,7 +696,7 @@ function gayMode(init) {
   }
 
   for (let line of linkData) {
-    if (line.__lineObj) {
+    if (line.__lineObj && line.source.__threeObj) {
       line.__lineObj.material.color.set(line.source.__threeObj.material.color);
     }
   }
@@ -675,4 +705,18 @@ function gayMode(init) {
     gayModeRunning = true;
     setTimeout(gayMode, 100);
   }
+}
+
+function getNodeLabel(node) {
+  return node.name;
+}
+
+function fillNodeDetails(node) {
+  let details = '';
+  details += `Name: ${node.name} <br>`;
+  details += `Strength: ${node.val} <br>`;
+  details += `Cluster: ${node.cluster} <br>`;
+  details += `Neighbours: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
+
+  document.getElementById('node-info').innerHTML = details;
 }
