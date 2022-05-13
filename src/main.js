@@ -16,7 +16,6 @@ const settings = {
 if (window.location.search) {
   const search = window.location.search.slice(1, window.location.search.length).split('-');
 
-  console.log(search);
   if (search.indexOf('fly') != -1) {
     settings.controlType = 'fly';
   } else if (search.indexOf('orbit') != -1) {
@@ -291,72 +290,70 @@ function generateSpanningTreeData() {
       }
     }
   }
-  console.log(Object.keys(spanNodes).length);
-  console.log(spanningEdges.length);
 }
 
-if (settings.graphType == 'spantree') {
-  generateSpanningTreeData();
+function addEdgeToSystem(focusBlogId, sourceBlogId, targetBlogId, value, data) {
+  let destination = targetBlogId;
+  let source = sourceBlogId;
+
+  if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
+    return false;
+  }
+
+  let [changedSource, sourceNode] = getSystemNode(source);
+  let [changedDestination, destinationNode] = getSystemNode(destination);
+
+  let changed = changedSource || changedDestination;
+
+  if (links[source] && links[source][destination]) {
+    return false;
+  };
+
+  destinationNode.totalVal ||= 0;
+  destinationNode.totalVal += value;
+
+  if (maxMaxValue < destinationNode.totalVal) {
+    maxMaxValue = destinationNode.totalVal;
+  }
+
+  if (destinationNode.val < value) {
+    destinationNode.val = value;
+  }
+
+  const original = links[destination] && links[destination][source];
+  if (original) {
+    if (original.linkDirection != 'both') {
+      original.linkDirection = 'both';
+      changed = true;
+      if (!settings.dag) getSystemLink(source, destination, data);
+    }
+  } else {
+    getSystemLink(source, destination, data);
+    changed = true;
+  }
+
+  return changed;
 }
 
 function addToSystemSpan(focusBlogId, options) {
+  if (settings.graphType == 'spantree' && spanningEdges.length == 0) {
+    generateSpanningTreeData();
+  }
+
   let changed = false;
   for (let edge of spanningEdges) {
     if (edge.used > options.topElems) {
       continue;
     }
     if (edge.value >= options.valuesToLimit) {
-      let destination = edge.target;
-      let source = edge.source;
-
-      if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
-        continue;
-      }
-
-      let [changedSource, sourceNode] = getSystemNode(source);
-      let [changedDestination, destinationNode] = getSystemNode(destination);
-
-      changed = changed || changedSource || changedDestination;
-
-      if (links[source] && links[source][destination]) {
-        continue;
-      };
-
-      destinationNode.totalVal ||= 0;
-      destinationNode.totalVal += edge.value;
-
-      if (destinationNode.val < edge.value) {
-        destinationNode.val = edge.value;
-
-        if (maxMaxValue < edge.value) {
-          maxMaxValue = edge.value;
-        }
-      }
-
-      const original = links[destination] && links[destination][source];
-      if (original) {
-        if (original.linkDirection != 'both') {
-          original.linkDirection = 'both';
-          changed = true;
-          if (!settings.dag) getSystemLink(source, destination, edge.data);
-        }
-      } else {
-        getSystemLink(source, destination, edge.data);
-        changed = true;
-      }
+      changed |= addEdgeToSystem(focusBlogId, edge.source, edge.target, edge.value, edge.data);
     }
   }
+
+  return changed;
 }
 
-// add a new node to the graph focused on the selection. It will add all nodes regardless of the current settings.valuesToLimit setting
-function addToSystem(focusBlogId, options = {}) {
-  options.valuesToLimit ||= 0;
-  options.topElems ||= settings.topElems;
-
-  if (settings.graphType == 'spantree') {
-    return addToSystemSpan(focusBlogId, options);
-  }
-
+function addToSystemTopBlog(focusBlogId, options = {}) {
   let changed = false;
   for (var sourceBlog in allData) {
     let destinationBlogs = {};
@@ -400,46 +397,25 @@ function addToSystem(focusBlogId, options = {}) {
     destinations = destinations.slice(0, options.topElems);
 
     for (destData of destinations) {
-      const destinationBlog = destData.blog;
-      const destinationData = destData.data;
-      const destination = parseInt(destinationBlog);
-      if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
-        continue;
-      }
-
-      let [changedSource, sourceNode] = getSystemNode(source);
-      let [changedDestination, destinationNode] = getSystemNode(destination);
-
-      changed = changed || changedSource || changedDestination;
-
-      if (links[source] && links[source][destination]) {
-        continue;
-      };
-
-      destinationNode.totalVal ||= 0;
-      destinationNode.totalVal += destData.value;
-
-      if (destinationNode.val < destData.value) {
-        destinationNode.val = destData.value;
-
-        if (maxMaxValue < destData.value) {
-          maxMaxValue = destData.value;
-        }
-      }
-
-      const original = links[destination] && links[destination][source];
-      if (original) {
-        if (original.linkDirection != 'both') {
-          original.linkDirection = 'both';
-          changed = true;
-          if (!settings.dag) getSystemLink(source, destination, destinationData);
-        }
-      } else {
-        getSystemLink(source, destination, destinationData);
-        changed = true;
-      }
+      changed |= addEdgeToSystem(focusBlogId, source, destData.id, destData.value, destData.data);
     }
   }
+
+  return changed;
+}
+
+// add a new node to the graph focused on the selection. It will add all nodes regardless of the current settings.valuesToLimit setting
+function addToSystem(focusBlogId, options = {}) {
+  options.valuesToLimit ||= 0;
+  options.topElems ||= settings.topElems;
+
+  let changed = false;
+  if (settings.graphType == 'spantree') {
+    changed = addToSystemSpan(focusBlogId, options);
+  } else {
+    changed = addToSystemTopBlog(focusBlogId, options);
+  }
+
   if (changed && !options.skipUpdate) {
     runClustering(true);
     Graph.graphData(initData);
@@ -471,7 +447,6 @@ function runClustering() {
       setCluster(node, currentCluster);
     }
   }
-  console.log("Clusters found: " + currentCluster);
 }
 
 // initial graph loading, only loading nodes and edges above a certain threshold
@@ -489,6 +464,7 @@ window.onload = function() {
   Graph.enableNodeDrag(false)
     .linkColor(getLinkColor)
     .nodeColor(() => `rgb(255,255,255,1)`)
+    .nodeVal(node => node.totalVal)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
@@ -580,7 +556,7 @@ for (let i = 0; i < 37; i++) {
 // top blogs
 let topBlogs = availableBlogs.map(blog => {
   let node = nodeData.find(node => node.id == blog.id);
-  return { name: blog.name, node: node, value: node ? node.val : 0, id: blog.id };
+  return { name: blog.name, node: node, value: node ? node.totalVal : 0, id: blog.id };
 }).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
 
 for (let blog of topBlogs) {
@@ -879,16 +855,19 @@ function getNodeLabel(node) {
 // node modification tools
 function fillNodeDetails(node) {
   let details = '';
-  details += `Name: ${node.name} <br>`;
-  details += `Strength: ${node.val} (${node.totalVal})<br>`;
-  details += `Cluster: ${node.cluster} <br>`;
-  details += `Neighbours: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
+  if (node) {
+    details += `Name: ${node.name} <br>`;
+    details += `Strength: ${node.val} (${node.totalVal})<br>`;
+    details += `Cluster: ${node.cluster} <br>`;
+    details += `Neighbours: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
+
+    document.getElementById('node-info-zoom').onclick = (e) => { autoFocus = node.id; e.preventDefault() };
+    document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
+    document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
+    document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
+  }
 
   document.getElementById('node-info-text').innerHTML = details;
-  document.getElementById('node-info-zoom').onclick = (e) => { autoFocus = node.id; e.preventDefault() };
-  document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
-  document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
-  document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
 }
 
 function openNode(node, includeNeighbors = false, skipUpdate = false) {
