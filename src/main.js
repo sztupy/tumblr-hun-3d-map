@@ -53,12 +53,12 @@ if (window.location.search) {
     settings.dimensions = 3;
   }
 
-  if (search.indexOf('settings.dag') != -1) {
-    dag = 'zin';
+  if (search.indexOf('dag') != -1) {
+    settings.dag = 'zin';
   } else if (search.indexOf('rad') != -1) {
-    dag = 'radialin';
+    settings.dag = 'radialin';
   } else if (search.indexOf('dar') != -1) {
-    dag = 'radialout';
+    settings.dag = 'radialout';
   }
 
   if (search.indexOf('colorlinks') != -1) {
@@ -102,11 +102,11 @@ if (window.location.search) {
   }
 
   let spantree;
-  if (topblog = search.find(name => name.startsWith('spantree'))) {
+  if (spantree = search.find(name => name.startsWith('spantree'))) {
     settings.graphType = 'spantree';
     settings.topElems = 1;
     let match;
-    if (match = topblog.match(/spantree_(\d+)/)) {
+    if (match = spantree.match(/spantree_(\d+)/)) {
       settings.topElems = parseInt(match[1]);
       if (settings.topElems<=0 || settings.topElems>100) {
         settings.topElems = 1;
@@ -140,11 +140,12 @@ function getSystemNode(id) {
     id: id,
     name: tumblrData.nodes[id],
     val: 1,
+    totalVal: 1,
     neighborsTo: new Set(),
     neighborsFrom: new Set(),
     links: new Set(),
     cluster: null,
-    openedDepth: null,
+    openedDepth: null
   };
 
   nodes[id] = newNode;
@@ -195,9 +196,166 @@ function getSystemLink(source, target, data) {
   return [true, newLink];
 }
 
+let spanningEdges = [];
+function generateSpanningTreeData() {
+  let sortedEdges = [];
+  let spanNodes = {};
+  for (var sourceBlog in allData) {
+    let destinationBlogs = {};
+    const source = parseInt(sourceBlog);
+
+    for (var year of settings.valuesToLoad) {
+      let yearData = tumblrData.years[year];
+      const sourceData = yearData[sourceBlog];
+      if (!sourceData) {
+        continue;
+      }
+      availableBlogIds.add(source);
+
+      for (var destinationBlog in sourceData) {
+        const destinationData = sourceData[destinationBlog];
+        const destination = parseInt(destinationBlog);
+        availableBlogIds.add(destination);
+
+        if (destinationBlogs[destination]) {
+          destinationBlogs[destination].value += destinationData[1];
+          destinationBlogs[destination].data[0] += destinationData[0];
+          destinationBlogs[destination].data[1] += destinationData[1];
+        } else {
+          destinationBlogs[destination] = {
+            source: source,
+            target: destination,
+            value: destinationData[1],
+            data: [ destinationData[0], destinationData[1] ],
+            used: 0
+          }
+        }
+      }
+    }
+
+    let destinations = Object.values(destinationBlogs);
+    for (var dest of destinations) {
+      sortedEdges.push(dest);
+    };
+  }
+  sortedEdges.sort((a, b) => b.value - a.value);
+
+  clusterNum = 0;
+  for (let count = 0; count < 50; count ++) {
+    for (node in spanNodes) {
+      spanNodes[node].cluster = null;
+    }
+    for (edge of sortedEdges) {
+      if (edge.used)
+        continue;
+
+      if (!spanNodes[edge.source]) {
+        spanNodes[edge.source] = {
+          id: edge.source,
+          cluster: null,
+          touches: 0
+        }
+      }
+
+      if (!spanNodes[edge.target]) {
+        spanNodes[edge.target] = {
+          id: edge.target,
+          cluster: null,
+          touches: 0
+        }
+      }
+
+      if ((spanNodes[edge.source].cluster === null) && (spanNodes[edge.target].cluster === null)) {
+        clusterNum += 1;
+        spanNodes[edge.source].cluster = clusterNum;
+        spanNodes[edge.target].cluster = clusterNum;
+        edge.used = count;
+        spanningEdges.push(edge);
+      } else if (spanNodes[edge.source].cluster === null) {
+        spanNodes[edge.source].cluster = spanNodes[edge.target].cluster;
+        edge.used = count;
+        spanningEdges.push(edge);
+      } else if (spanNodes[edge.target].cluster === null) {
+        spanNodes[edge.target].cluster = spanNodes[edge.source].cluster;
+        edge.used = count;
+        spanningEdges.push(edge);
+      } else if (spanNodes[edge.source].cluster !== spanNodes[edge.target].cluster) {
+        let oldCluster = spanNodes[edge.target].cluster;
+        for (var node in spanNodes) {
+          if (spanNodes[node].cluster === oldCluster) {
+            spanNodes[node].cluster = spanNodes[edge.source].cluster;
+          }
+        }
+        edge.used = count;
+        spanningEdges.push(edge);
+      }
+    }
+  }
+  console.log(Object.keys(spanNodes).length);
+  console.log(spanningEdges.length);
+}
+
+if (settings.graphType == 'spantree') {
+  generateSpanningTreeData();
+}
+
+function addToSystemSpan(focusBlogId, options) {
+  let changed = false;
+  for (let edge of spanningEdges) {
+    if (edge.used > options.topElems) {
+      continue;
+    }
+    if (edge.value >= options.valuesToLimit) {
+      let destination = edge.target;
+      let source = edge.source;
+
+      if (focusBlogId !== null && destination !== focusBlogId && source !== focusBlogId) {
+        continue;
+      }
+
+      let [changedSource, sourceNode] = getSystemNode(source);
+      let [changedDestination, destinationNode] = getSystemNode(destination);
+
+      changed = changed || changedSource || changedDestination;
+
+      if (links[source] && links[source][destination]) {
+        continue;
+      };
+
+      destinationNode.totalVal ||= 0;
+      destinationNode.totalVal += edge.value;
+
+      if (destinationNode.val < edge.value) {
+        destinationNode.val = edge.value;
+
+        if (maxMaxValue < edge.value) {
+          maxMaxValue = edge.value;
+        }
+      }
+
+      const original = links[destination] && links[destination][source];
+      if (original) {
+        if (original.linkDirection != 'both') {
+          original.linkDirection = 'both';
+          changed = true;
+          if (!settings.dag) getSystemLink(source, destination, edge.data);
+        }
+      } else {
+        getSystemLink(source, destination, edge.data);
+        changed = true;
+      }
+    }
+  }
+}
+
 // add a new node to the graph focused on the selection. It will add all nodes regardless of the current settings.valuesToLimit setting
 function addToSystem(focusBlogId, options = {}) {
   options.valuesToLimit ||= 0;
+  options.topElems ||= settings.topElems;
+
+  if (settings.graphType == 'spantree') {
+    return addToSystemSpan(focusBlogId, options);
+  }
 
   let changed = false;
   for (var sourceBlog in allData) {
@@ -239,7 +397,7 @@ function addToSystem(focusBlogId, options = {}) {
     if (options.valuesToLimit > 0) {
       destinations = destinations.filter((d) => d.value >= options.valuesToLimit);
     }
-    destinations = destinations.slice(0, options.topElems || settings.topElems);
+    destinations = destinations.slice(0, options.topElems);
 
     for (destData of destinations) {
       const destinationBlog = destData.blog;
@@ -254,18 +412,20 @@ function addToSystem(focusBlogId, options = {}) {
 
       changed = changed || changedSource || changedDestination;
 
+      if (links[source] && links[source][destination]) {
+        continue;
+      };
+
+      destinationNode.totalVal ||= 0;
+      destinationNode.totalVal += destData.value;
+
       if (destinationNode.val < destData.value) {
         destinationNode.val = destData.value;
-        destinationNode.sprite = null;
 
         if (maxMaxValue < destData.value) {
           maxMaxValue = destData.value;
         }
       }
-
-      if (links[source] && links[source][destination]) {
-        continue;
-      };
 
       const original = links[destination] && links[destination][source];
       if (original) {
@@ -283,6 +443,9 @@ function addToSystem(focusBlogId, options = {}) {
   if (changed && !options.skipUpdate) {
     runClustering(true);
     Graph.graphData(initData);
+    if (settings.dag) {
+      Graph.dagMode(settings.dag);
+    }
   }
 
   return changed;
@@ -717,7 +880,7 @@ function getNodeLabel(node) {
 function fillNodeDetails(node) {
   let details = '';
   details += `Name: ${node.name} <br>`;
-  details += `Strength: ${node.val} <br>`;
+  details += `Strength: ${node.val} (${node.totalVal})<br>`;
   details += `Cluster: ${node.cluster} <br>`;
   details += `Neighbours: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
 
@@ -772,6 +935,9 @@ function deleteNode(node) {
   nodeData.splice(nodeData.indexOf(node),1);
 
   Graph.graphData(initData);
+  if (settings.dag) {
+    Graph.dagMode(settings.dag);
+  }
   runClustering();
   updateHighlight();
 }
