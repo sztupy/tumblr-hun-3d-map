@@ -84,6 +84,19 @@ if (window.location.search) {
       }
     }
   }
+
+  let spantree;
+  if (topblog = search.find(name => name.startsWith('spantree'))) {
+    graphType = 'spantree';
+    topElems = 1;
+    let match;
+    if (match = topblog.match(/spantree_(\d+)/)) {
+      topElems = parseInt(match[1]);
+      if (topElems<=0 || topElems>100) {
+        topElems = 1;
+      }
+    }
+  }
 }
 
 const linkData = [];
@@ -113,7 +126,8 @@ function getSystemNode(id) {
     val: 1,
     neighborsTo: new Set(),
     neighborsFrom: new Set(),
-    links: new Set()
+    links: new Set(),
+    cluster: null
   };
 
   nodes[id] = newNode;
@@ -252,8 +266,33 @@ function addToSystem(focusBlogId, options = {}) {
   return changed;
 }
 
+function setCluster(node, cluster, override = false) {
+  if (override && node.cluster === cluster) return;
+  if (!override && node.cluster !== null) return;
+
+  node.cluster = cluster;
+  node.neighborsFrom.forEach(n => setCluster(n, cluster, override));
+  node.neighborsTo.forEach(n => setCluster(n, cluster, override));
+}
+
+function runClustering() {
+  let currentCluster = 1;
+  for (let node of nodeData) {
+    node.cluster = null;
+  }
+
+  for (let node of nodeData) {
+    if (node.cluster === null) {
+      setCluster(node, currentCluster, false);
+      currentCluster+=1;
+    }
+  }
+  console.log("Clusters found: " + currentCluster);
+}
+
 // initial graph loading, only loading nodes and edges above a certain threshold
 addToSystem(null, { valuesToLimit: valuesToLimit, skipUpdate: true });
+runClustering();
 
 const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
 
@@ -528,24 +567,41 @@ function getNodeObject(node) {
 
   if (node.sprite) {
     result = node.sprite;
-
-    if (displayType=='labels' || (displayType=='top50' && node.topBlog)) {
-      node.sprite.material.color.set(0xffffff);
-    }
-
-    if (hightlightNodes.has(node)) {
-      result = node.sprite;
-      node.sprite.material.color.set(0x00ff00);
-    }
   }
 
+  colorizeNode(node);
 
   return result;
 }
 
+function colorizeNode(node) {
+  let obj = node.sprite || node.__threeObj;
+
+  if (!obj) return;
+
+  if (hightlightNodes.has(node)) {
+    if (node.cluster) {
+      obj.material.color.setHSL((node.cluster % 20)/20, 1, 0.5);
+    } else {
+      obj.material.color.setHSL(0, 0, 0.75);
+    }
+    return;
+  }
+
+  if (node.cluster) {
+    obj.material.color.setHSL((node.cluster % 20)/20, 1, 0.75);
+  } else {
+    obj.material.color.setHSL(0, 0, 1);
+  }
+}
+
+let colorObject = TinyColor("#00ff00");
 // obtain the color of the link
 function getLinkColor(link)
 {
+  if (link.source.cluster) {
+    return TinyColor({h: (link.source.cluster % 20)/20*360, s: 0.75, l: 0.5, a: 0.5});
+  }
   if (link.linkDirection == 'both') {
     if (highlightLinksBoth.has(link)) {
       return 'rgba(255,0,0,0.8)';
@@ -567,15 +623,30 @@ function getLinkColor(link)
 
 // trigger update of highlighted objects in scene
 function updateHighlight() {
-  Graph
-    .linkColor(Graph.linkColor())
-    .linkWidth(Graph.linkWidth())
-    .nodeThreeObject(Graph.nodeThreeObject())
-    .linkDirectionalParticles(Graph.linkDirectionalParticles());
+  //Graph
+    // .linkColor(Graph.linkColor())
+    // .linkWidth(Graph.linkWidth())
+    // .nodeThreeObject(Graph.nodeThreeObject())
+    // .linkDirectionalParticles(Graph.linkDirectionalParticles());
+
+  setTimeout(() => {
+    for (node of nodeData) {
+      colorizeNode(node);
+    }},100);
 }
+
+setTimeout(() => {
+  for (node of nodeData) {
+    colorizeNode(node);
+  }},100);
 
 let gayModeRunning = false;
 function gayMode(init) {
+  if (init) {
+    window.GAY_MODE = true;
+    Graph.linkColor(Graph.linkColor());
+  }
+
   let currentHSL = {};
   for (let nodeKey in nodes) {
     let node = nodes[nodeKey];
@@ -591,6 +662,12 @@ function gayMode(init) {
       while (nextHSL>=1) nextHSL -= 1;
 
       node.__threeObj.material.color.setHSL(nextHSL, 1, 0.5);
+    }
+  }
+
+  for (let line of linkData) {
+    if (line.__lineObj) {
+      line.__lineObj.material.color.set(line.source.__threeObj.material.color);
     }
   }
 

@@ -6956,6 +6956,7 @@ function InsertStackElement(node, body) {
   }(tinycolor));
 
   var tinyColor = tinycolor.exports;
+  window.TinyColor = tinyColor;
 
   function ownKeys(object, enumerableOnly) {
     var keys = Object.keys(object);
@@ -8322,18 +8323,27 @@ function InsertStackElement(node, body) {
                 if (obj.material.type !== materialType || !obj.material.color.equals(materialColor) || obj.material.opacity !== opacity) {
                   var lineMaterials = useCylinder ? lambertLineMaterials : basicLineMaterials;
 
-                  if (!lineMaterials.hasOwnProperty(color)) {
-                    lineMaterials[color] = new three$1$1[materialType]({
+                  if (window.GAY_MODE) {
+                    obj.material.dispose();
+                    obj.material = new three$1$1[materialType]({
                       color: materialColor,
                       transparent: opacity < 1,
                       opacity: opacity,
                       depthWrite: opacity >= 1 // Prevent transparency issues
-
                     });
-                  }
+                  } else {
+                    if (!lineMaterials.hasOwnProperty(color)) {
+                      lineMaterials[color] = new three$1$1[materialType]({
+                        color: materialColor,
+                        transparent: opacity < 1,
+                        opacity: opacity,
+                        depthWrite: opacity >= 1 // Prevent transparency issues
+                      });
+                    }
 
-                  obj.material.dispose();
-                  obj.material = lineMaterials[color];
+                    obj.material.dispose();
+                    obj.material = lineMaterials[color];
+                  }
                 }
               }
             }
