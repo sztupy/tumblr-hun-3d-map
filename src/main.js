@@ -904,8 +904,12 @@ function openNode(node, includeNeighbors = false, skipUpdate = false) {
 
 function deleteNode(node) {
   if (!node) return;
-  document.getElementById(`top-blog-${node.id}`).classList.remove('top-blog');
-  document.getElementById(`blog-${node.id}`).classList.remove('top-blog');
+  let element;
+  element = document.getElementById(`top-blog-${node.id}`);
+  if (element) element.classList.remove('top-blog');
+
+  element = document.getElementById(`blog-${node.id}`);
+  if (element) element.classList.remove('top-blog');
 
   node.links.forEach(link => {
     link.source.links.delete(link);
