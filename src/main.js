@@ -865,10 +865,18 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
     document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
     document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
+  } else {
+    let prevDefault = (e) => { e.preventDefault() };
+    document.getElementById('node-info-zoom').onclick = prevDefault;
+    document.getElementById('node-info-add').onclick = prevDefault;
+    document.getElementById('node-info-add-all').onclick = prevDefault;
+    document.getElementById('node-info-delete').onclick = prevDefault;
   }
 
   document.getElementById('node-info-text').innerHTML = details;
 }
+fillNodeDetails(null);
+
 
 function openNode(node, includeNeighbors = false, skipUpdate = false) {
   if (includeNeighbors) {
