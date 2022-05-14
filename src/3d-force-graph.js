@@ -13211,7 +13211,9 @@ function InsertStackElement(node, body) {
     }[controlType] || '';
     state.navInfo.style.display = state.showNavInfo ? null : 'none'; // Setup tooltip
 
+    let oldTarget;
     if (state.controls) {
+      oldTarget = state.controls.target;
       state.controls.dispose();
     }
 
@@ -13242,6 +13244,9 @@ function InsertStackElement(node, body) {
         state.controlsEngaged = false;
         state.controlsDragging = false;
       });
+      if (oldTarget) {
+        state.controls.target = oldTarget;
+      }
     }
   }
 
