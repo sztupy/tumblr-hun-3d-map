@@ -55,7 +55,7 @@ body {
 #stats-content, #config-content {
   flex: 1 1 auto;
   overflow: scroll;
-  font-size: 2vmax;
+  font-size: 1.5vmax;
   padding: 1em;
 }
 

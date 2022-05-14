@@ -3,7 +3,7 @@ const settings = {
   displayType: 'top50',
   graphType: 'topblog',
   topElems: 1,
-  labelLoadPerTick: 2500,
+  labelLoadPerTick: 10000000,
   valuesToLimit: 50,
   valuesToLoad: ["2019","2020","2021","current"],
   dimensions: 3,
@@ -12,40 +12,66 @@ const settings = {
   colorNodes: false
 }
 
+const search = window.location.search ? window.location.search.slice(1, window.location.search.length).split('-') : [];
+const settingConfig = {};
+
+function updateSettings() {
+  let result = [];
+  let form = document.forms[0];
+  for (let name in settingConfig) {
+    let map = settingConfig[name];
+    result.push(map[form[name].value]);
+  }
+  return result.join('-');
+}
+
+function setupSearch(mapping, settingName, formElement, formFunction) {
+  let value = settings[settingName];
+  for (let name in mapping) {
+    let result;
+    if (result = search.find(s => s == name || s.startsWith(name+"_"))) {
+      settings[settingName] = mapping[name];
+      value = mapping[name];
+      break;
+    }
+  }
+
+  settingConfig[formElement] = Object.fromEntries(Object.entries(mapping).map(([key, value]) => [value, key]));
+
+  document.getElementsByName(formElement).forEach(e => {
+    e.onchange = (e) => {
+      let result = formFunction(e);
+      let newSettings = updateSettings();
+      if (result == 'redirect') {
+        window.location.replace("test.html?" + newSettings);
+      } else {
+        window.history.replaceState(null,'',"test.html?"+newSettings);
+      }
+    }
+
+    if (e.value === value+"") {
+      e.checked = true;
+    }
+  });
+}
+
+setupSearch({ fly: 'fly', orbit: 'orbit', trackball: 'trackball'}, 'controlType', 'control_type', (e) => {
+  Graph.setNewControls(e.target.value);
+});
+setupSearch({ labels: 'labels', top50: 'top50', spheres: 'spheres'}, 'displayType', 'display_type', (e) => {
+  settings.displayType = e.target.value;
+  if (settings.displayType != 'labels') {
+    nodeData.forEach(node => { if (node.sprite) { node.sprite.material.map.dispose(); node.sprite.material.dispose(); node.sprite = null; } });
+  }
+  updateHighlight();
+});
+setupSearch({ full: 0, limited: 25, minimal: 50 }, 'valuesToLimit', 'values_to_limit', (e) => {
+  settings.valuesToLimit = parseInt(e.target.value);
+
+});
+
 // load up initial configuration from the URL
 if (window.location.search) {
-  const search = window.location.search.slice(1, window.location.search.length).split('-');
-
-  if (search.indexOf('fly') != -1) {
-    settings.controlType = 'fly';
-  } else if (search.indexOf('orbit') != -1) {
-    settings.controlType = 'orbit';
-  } else if (search.indexOf('trackball') != -1) {
-    settings.controlType = 'trackball';
-  }
-
-  if (search.indexOf('labels') != -1) {
-    settings.displayType = 'labels';
-    settings.labelLoadPerTick = 10000000;
-  } else if (search.indexOf('loader') != -1) {
-    settings.displayType = 'labels';
-    settings.labelLoadPerTick = 2500;
-  } else if (search.indexOf('top50') != -1) {
-    settings.displayType = 'top50';
-    settings.labelLoadPerTick = 2500;
-  } else if (search.indexOf('spheres') != -1) {
-    settings.displayType = 'spheres';
-    settings.labelLoadPerTick = 100;
-  }
-
-  if (search.indexOf('full') != -1) {
-    settings.valuesToLimit = 0;
-  } else if (search.indexOf('limited') != -1) {
-    settings.valuesToLimit = 25;
-  } else if (search.indexOf('minimal') != -1) {
-    settings.valuesToLimit = 50;
-  }
-
   if (search.indexOf('2d') != -1) {
     settings.dimensions = 2;
   } else if (search.indexOf('3d') != -1) {
@@ -986,8 +1012,4 @@ function deleteNode(node) {
   runClustering();
   updateHighlight();
   fillNodeDetails(null);
-}
-
-function updateSettings() {
-
 }

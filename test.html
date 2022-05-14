@@ -31,13 +31,27 @@
     <div id="config">
       <div id="config-exit" title="Kilépés">[X]</div>
       <div id="config-content">
-        <h3>Gráf</h3>
-        <hr>
+        <form autocomplete="off" method="get" action="" onsubmit="event.preventDefault(); return false;">
+        <input autocomplete="false" name="hidden" type="text" style="display:none;">
         <h3>Irányítás</h3>
+          <input type="radio" id="s-control_type-fly" name="control_type" value="fly"><label for="s-control_type-fly" title="Űrhajószimulátor">🚀</label>
+          <input type="radio" id="s-control_type-orbit" name="control_type" value="orbit"><label for="s-control_type-orbit" title="Földgömb">🌍</label>
+          <input type="radio" id="s-control_type-tracball" name="control_type" value="trackball"><label for="s-control_type-trackball" title="Golyó">🔮</label><br>
         <hr>
+        <h3>Gráf</h3>
+          <h4>Előre betöltött kapcsolatok</h4>
+          <input type="radio" id="s-values_to_limit-minimal" name="values_to_limit" value="50"><label for="s-values_to_limit-minimal" title="Legnagyobb kacspolatok betöltése">Legnagyobbak</label><br>
+          <input type="radio" id="s-values_to_limit-limited" name="values_to_limit" value="25"><label for="s-values_to_limit-limited" title="Főbb kapcsolatok betöltése">Nagyobbak</label><br>
+          <input type="radio" id="s-values_to_limit-full" name="values_to_limit" value="0"><label for="s-values_to_limit-full" title="Összes kapcsolat betöltése">Összes</label>
+        <hr>
+        <h3>Megjelenés</h3>
+          <input type="radio" id="s-display_type-spheres" name="display_type" value="spheres"><label for="s-display_type-spheres" title="Bogyók">Golyók</label><br>
+          <input type="radio" id="s-display_type-top50" name="display_type" value="top50"><label for="s-display_type-top50" title="Top 50 cimkézve">Top blogok cimkézve</label><br>
+          <input type="radio" id="s-display_type-labels" name="display_type" value="labels"><label for="s-display_type-labels" title="Cimkék">Összes blog cimkézve</label>
         <h3>Színek</h3>
-        <input type="checkbox" id="s-colornodes" name="colornodes" value="colornodes"><label for="s-colornodes">Színblog</label><br>
-        <input type="checkbox" id="s-colorlinks" name="colorlinks" value="colorlinks"><label for="s-colorlinks">Színvonal</label><br>
+          <input type="checkbox" id="s-colornodes" name="colornodes" value="colornodes"><label for="s-colornodes">Színblog</label><br>
+          <input type="checkbox" id="s-colorlinks" name="colorlinks" value="colorlinks"><label for="s-colorlinks">Színvonal</label><br>
+        </form>
       </div>
     </div>
 

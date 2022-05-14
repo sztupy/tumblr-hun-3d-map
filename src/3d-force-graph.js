@@ -13203,6 +13203,48 @@ function InsertStackElement(node, body) {
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
+  function _graphControlsInit(controlType, state) {
+    state.navInfo.textContent = {
+      orbit: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
+      trackball: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
+      fly: 'WASD/RF/QE: move/roll, Arrows: pitch/yaw, Touch: rotate, Multi-touch: forward'
+    }[controlType] || '';
+    state.navInfo.style.display = state.showNavInfo ? null : 'none'; // Setup tooltip
+
+    if (state.controls) {
+      state.controls.dispose();
+    }
+
+    state.controls = new {
+      trackball: TrackballControls,
+      orbit: OrbitControls,
+      fly: FlyControls
+    }[controlType](state.camera, state.renderer.domElement);
+
+    if (controlType === 'fly') {
+      state.controls.movementSpeed = 300;
+      state.controls.rollSpeed = Math.PI / 6;
+      state.controls.dragToLook = true;
+    }
+
+    if (controlType === 'trackball' || controlType === 'orbit') {
+      state.controls.minDistance = 0.1;
+      state.controls.maxDistance = state.skyRadius;
+      state.controls.addEventListener('start', function () {
+        state.controlsEngaged = true;
+      });
+      state.controls.addEventListener('change', function () {
+        if (state.controlsEngaged) {
+          state.controlsDragging = true;
+        }
+      });
+      state.controls.addEventListener('end', function () {
+        state.controlsEngaged = false;
+        state.controlsDragging = false;
+      });
+    }
+  }
+
   var three$1 = window.THREE ? window.THREE // Prefer consumption from global THREE, if exists
   : {
     WebGLRenderer: WebGLRenderer,
@@ -13486,6 +13528,10 @@ function InsertStackElement(node, body) {
         raycaster.setFromCamera(relCoords, state.camera);
         return raycaster.intersectObjects(state.objects, true);
       },
+      setNewControls: function setNewControls(state, controlType) {
+        _graphControlsInit(controlType, state);
+        return this;
+      },
       renderer: function renderer(state) {
         return state.renderer;
       },
@@ -13533,18 +13579,12 @@ function InsertStackElement(node, body) {
 
       state.container.appendChild(state.navInfo = document.createElement('div'));
       state.navInfo.className = 'scene-nav-info';
-      state.navInfo.textContent = {
-        orbit: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
-        trackball: 'Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan',
-        fly: 'WASD/RF/QE: move/roll, Arrows: pitch/yaw, Touch: rotate, Multi-touch: forward'
-      }[controlType] || '';
-      state.navInfo.style.display = state.showNavInfo ? null : 'none'; // Setup tooltip
 
       state.toolTipElem = document.createElement('div');
       state.toolTipElem.classList.add('scene-tooltip');
       state.container.appendChild(state.toolTipElem); // Capture pointer coords on move or touchstart
 
-    state.pointerCount = 0;
+      state.pointerCount = 0;
       state.pointerPos = new three$1.Vector2();
       state.pointerPos.x = -2; // Initialize off canvas
 
@@ -13553,7 +13593,7 @@ function InsertStackElement(node, body) {
         return state.container.addEventListener(evType, function (ev) {
           // track click state
           evType === 'pointerdown' && (state.isPointerPressed = true); // detect point drag
-      evType === 'pointerdown' && (state.pointerCount += 1); // detect point drag
+          evType === 'pointerdown' && (state.pointerCount += 1); // detect point drag
 
           !state.isPointerDragging && ev.type === 'pointermove' && (ev.pressure > 0 || state.isPointerPressed) // ev.pressure always 0 on Safari, so we used the isPointerPressed tracker
           && (ev.movementX === undefined || [ev.movementX, ev.movementY].some(function (m) {
@@ -13644,34 +13684,7 @@ function InsertStackElement(node, body) {
       state.postProcessingComposer.addPass(new RenderPass(state.scene, state.camera)); // render scene as first pass
       // configure controls
 
-      state.controls = new {
-        trackball: TrackballControls,
-        orbit: OrbitControls,
-        fly: FlyControls
-      }[controlType](state.camera, state.renderer.domElement);
-
-      if (controlType === 'fly') {
-        state.controls.movementSpeed = 300;
-        state.controls.rollSpeed = Math.PI / 6;
-        state.controls.dragToLook = true;
-      }
-
-      if (controlType === 'trackball' || controlType === 'orbit') {
-        state.controls.minDistance = 0.1;
-        state.controls.maxDistance = state.skyRadius;
-        state.controls.addEventListener('start', function () {
-          state.controlsEngaged = true;
-        });
-        state.controls.addEventListener('change', function () {
-          if (state.controlsEngaged) {
-            state.controlsDragging = true;
-          }
-        });
-        state.controls.addEventListener('end', function () {
-          state.controlsEngaged = false;
-          state.controlsDragging = false;
-        });
-      }
+      _graphControlsInit(controlType, state);
 
       [state.renderer, state.postProcessingComposer].concat(_toConsumableArray(state.extraRenderers)).forEach(function (r) {
         return r.setSize(state.width, state.height);
@@ -13928,6 +13941,9 @@ function InsertStackElement(node, body) {
       // Expose controls
       tbControls: function tbControls(state) {
         return state.renderObjs.tbControls();
+      },
+      setNewControls: function setNewControls(state, controlType) {
+        return state.renderObjs.setNewControls(controlType);
       },
       // To be deprecated
       _destructor: function _destructor() {
