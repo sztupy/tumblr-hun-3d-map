@@ -160,6 +160,7 @@ if (window.location.search) {
   }
 }
 
+const nodeBlackList = new Set();
 const linkData = [];
 const nodeData = [];
 const links = {};
@@ -245,9 +246,12 @@ let spanningEdges = [];
 function generateSpanningTreeData() {
   let sortedEdges = [];
   let spanNodes = {};
+
   for (var sourceBlog in allData) {
     let destinationBlogs = {};
     const source = parseInt(sourceBlog);
+    if (nodeBlackList.has(source))
+      continue;
 
     for (var year of settings.valuesToLoad) {
       let yearData = tumblrData.years[year];
@@ -260,6 +264,9 @@ function generateSpanningTreeData() {
       for (var destinationBlog in sourceData) {
         const destinationData = sourceData[destinationBlog];
         const destination = parseInt(destinationBlog);
+        if (nodeBlackList.has(destination))
+          continue;
+
         availableBlogIds.add(destination);
 
         if (destinationBlogs[destination]) {
@@ -404,6 +411,8 @@ function addToSystemTopBlog(focusBlogId, options = {}) {
   for (var sourceBlog in allData) {
     let destinationBlogs = {};
     const source = parseInt(sourceBlog);
+    if (nodeBlackList.has(source))
+      continue;
 
     for (var year of settings.valuesToLoad) {
       let yearData = tumblrData.years[year];
@@ -417,6 +426,9 @@ function addToSystemTopBlog(focusBlogId, options = {}) {
       for (var destinationBlog in sourceData) {
         const destinationData = sourceData[destinationBlog];
         const destination = parseInt(destinationBlog);
+        if (nodeBlackList.has(destination))
+          continue;
+
         availableBlogIds.add(destination);
 
         if (destinationBlogs[destination]) {
@@ -452,6 +464,9 @@ function addToSystemTopBlog(focusBlogId, options = {}) {
 
 // add a new node to the graph focused on the selection. It will add all nodes regardless of the current settings.valuesToLimit setting
 function addToSystem(focusBlogId, options = {}) {
+  if (nodeBlackList.has(focusBlogId))
+    return false;
+
   options.valuesToLimit ||= 0;
   options.topElems ||= settings.topElems;
 
@@ -947,6 +962,7 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
     document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
     document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
+    document.getElementById('node-info-ban').onclick = (e) => { deleteNode(node, true); e.preventDefault(); };
 
     document.getElementById('node-info').style.display = "block";
   } else {
@@ -955,6 +971,7 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-add').onclick = prevDefault;
     document.getElementById('node-info-add-all').onclick = prevDefault;
     document.getElementById('node-info-delete').onclick = prevDefault;
+    document.getElementById('node-info-ban').onclick = prevDefault;
     document.getElementById('node-info').style.display = "none";
   }
 
@@ -987,14 +1004,22 @@ function openNode(node, includeNeighbors = false, skipUpdate = false) {
   }
 }
 
-function deleteNode(node) {
+function deleteNode(node, blacklist = false) {
   if (!node) return;
+  if (blacklist) {
+    nodeBlackList.add(node.id);
+    availableBlogIds.delete(node.id);
+    spanningEdges = [];
+  }
+
   let element;
   element = document.getElementById(`top-blog-${node.id}`);
   if (element) element.classList.remove('top-blog');
+  if (element && blacklist) element.remove();
 
   element = document.getElementById(`blog-${node.id}`);
   if (element) element.classList.remove('top-blog');
+  if (element && blacklist) element.remove();
 
   node.links.forEach(link => {
     link.source.links.delete(link);
@@ -1014,6 +1039,7 @@ function deleteNode(node) {
   if (settings.dag) {
     Graph.dagMode(settings.dag);
   }
+
   runClustering();
   updateHighlight();
   fillNodeDetails(null);
