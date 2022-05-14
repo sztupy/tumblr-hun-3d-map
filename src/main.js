@@ -55,7 +55,12 @@ function setupSearch(mapping, settingName, formElement, formFunction) {
   });
 }
 
-setupSearch({ fly: 'fly', orbit: 'orbit', trackball: 'trackball'}, 'controlType', 'control_type', (e) => {
+setupSearch({ fly: 'fly', orbit: 'orbit', trackball: 'trackball'}, 'controlType', 'control_type', (e) =>
+{
+  if (e.target.value == 'trackball') {
+    Graph.cameraPosition({x: 0, y: 0, z: 1000}, {x: 0, y: 0, z: 0},);
+  }
+
   Graph.setNewControls(e.target.value);
 });
 setupSearch({ labels: 'labels', top50: 'top50', spheres: 'spheres'}, 'displayType', 'display_type', (e) => {
