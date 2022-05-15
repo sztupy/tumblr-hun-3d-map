@@ -12,6 +12,7 @@ const settings = {
   colorNodes: false,
   keepOnChange: false,
   deleteOrphans: false,
+  autoZoom: false,
   nodeTransparency: 0.5,
   linkTransparency: 0.5,
   selectedLinkTransparency: 0.8,
@@ -130,6 +131,10 @@ setupSearch({'keepchg': true}, 'keepOnChange', 'keep_on_change', (e) => {
   settings.keepOnChange = e.target.checked;
 });
 
+setupSearch({'autozoom': true}, 'autoZoom', 'auto_zoom', (e) => {
+  settings.autoZoom = e.target.checked;
+});
+
 setupSearch({'noorph': true}, 'deleteOrphans', 'delete_orphans', (e) => {
   settings.deleteOrphans = e.target.checked;
   if (settings.deleteOrphans) {
@@ -192,24 +197,6 @@ if (settings.valuesToLoad.length == 0) {
   settings.valuesToLoad = ["2019","2020","2021","current"];
   for (let year=19; year<=22; year++) {
     document.getElementsByName(`y${year}`)[0].checked = true;
-  }
-}
-
-// load up initial configuration from the URL
-if (window.location.search) {
-  let years;
-  if (years = search.find(name => name.startsWith('years'))) {
-    let load = [];
-    years.split('_').forEach(year => {
-      if (parseInt(year)>=10 && parseInt(year)<22)
-        load.push("20"+year);
-      if (parseInt(year)==22)
-        load.push('current');
-    });
-
-    if (load.length > 0) {
-      settings.valuesToLoad = load.filter((v, i, a) => a.indexOf(v) === i);
-    }
   }
 }
 
@@ -805,7 +792,7 @@ function runZoom() {
       zoomTo(node, 1000);
     }
 
-    setTimeout(runZoom, 1500);
+    setTimeout(runZoom, 1100);
   } else {
     setTimeout(runZoom, 500);
   }
@@ -883,6 +870,14 @@ function onNodeClick(node) {
   fillNodeDetails(node);
   hoverNode = node || null;
   updateHighlight();
+
+  if (settings.autoZoom) {
+    if (node) {
+      autoFocus = node.id;
+    } else {
+      autoFocus = 'all';
+    }
+  }
 }
 
 // generate label for a node for a specific color
