@@ -82,8 +82,16 @@
           <input type="radio" id="s-display_type-top50" name="display_type" value="top50"><label for="s-display_type-top50" title="Top 50 cimkézve">Top blogok cimkézve</label><br>
           <input type="radio" id="s-display_type-labels" name="display_type" value="labels"><label for="s-display_type-labels" title="Cimkék">Összes blog cimkézve</label>
         <h3>Színek</h3>
-          <input type="checkbox" id="s-colornodes" name="colornodes" value="true"><label for="s-colornodes">Színblog</label><br>
-          <input type="checkbox" id="s-colorlinks" name="colorlinks" value="true"><label for="s-colorlinks">Színvonal</label><br>
+          <input type="checkbox" id="s-colornodes" name="colornodes" value="true"><label for="s-colornodes" title="Blogok kiszinezése csoportszám alapján">Színblog</label><br>
+          <input type="checkbox" id="s-colorlinks" name="colorlinks" value="true"><label for="s-colorlinks" title="Élek kiszinezése csoportszám alapján">Színvonal</label><br>
+        <h3>Egyebek</h3>
+          <input type="checkbox" id="s-keep_on_change" name="keep_on_change" value="true"><label for="s-keep_on_change" title="Meglévő kapcsolatok megtartása a gráf adatsorának változása esetén">Kapcsolatok megtartása</label><br>
+          <input type="checkbox" id="s-delete_orphans" name="delete_orphans" value="true"><label for="s-delete_orphans" title="Magányossá váló blogok törlése a gráf adatsorának változása esetén automatikusan">Magányos blogok automatikus törlése</label><br>
+          <br>
+          <button id="b-remove-orphans">Magányos blogok kitakarítása</button><br>
+          <button id="b-remove-leaf-nodes">Zsákutca blogok kitakarítása</button><br>
+          <button id="b-remove-one-link">Végblogok kitakarítása</button><br>
+          <button id="b-empty-blacklist">Blokkolt blogok újraengedélyezése</button>
         </form>
       </div>
     </div>

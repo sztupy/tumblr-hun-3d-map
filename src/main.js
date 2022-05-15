@@ -9,7 +9,9 @@ const settings = {
   dimensions: 3,
   dag: false,
   colorLinks: false,
-  colorNodes: false
+  colorNodes: false,
+  keepOnChange: false,
+  deleteOrphans: false
 }
 
 const search = window.location.search ? window.location.search.slice(1, window.location.search.length).split('-') : [];
@@ -89,11 +91,17 @@ setupSearch({ labels: 'labels', top50: 'top50', spheres: 'spheres'}, 'displayTyp
 
 setupSearch({ full: 0, most: 10, some: 25, limited: 50, onlytop: 100 }, 'valuesToLimit', 'values_to_limit', (e) => {
   settings.valuesToLimit = parseInt(e.target.value);
+  if (!settings.keepOnChange) {
+    resetNodes();
+  }
   addToSystem(null, { valuesToLimit: settings.valuesToLimit });
 });
 
 setupSearch({ '2d': 2, '3d': 3}, 'dimensions', 'dimensions', (e) => {
   settings.dimensions = parseInt(e.target.value);
+  if (settings.dimensions == 3) {
+    nodeData.forEach(node => node.z = 1);
+  }
   Graph.numDimensions(settings.dimensions);
 });
 
@@ -102,25 +110,42 @@ setupSearch({'dag': 'td', 'rad': 'radialin', 'dar': 'radialout', 'nodag': false}
   Graph.dagMode(settings.dag);
 });
 
-setupSearch({'colorlinks': true, 'bwlinks': false}, 'colorLinks', 'colorlinks', (e) => {
+setupSearch({'clink': true}, 'colorLinks', 'colorlinks', (e) => {
   settings.colorLinks = e.target.checked;
   updateHighlight();
   updateSettings();
 });
 
-setupSearch({'colornodes': true, 'bwnodes': false}, 'colorNodes', 'colornodes', (e) => {
+setupSearch({'cnode': true}, 'colorNodes', 'colornodes', (e) => {
   settings.colorNodes = e.target.checked;
   updateHighlight();
   updateSettings();
 });
 
+setupSearch({'keepchg': true}, 'keepOnChange', 'keep_on_change', (e) => {
+  settings.keepOnChange = e.target.checked;
+});
+
+setupSearch({'noorph': true}, 'deleteOrphans', 'delete_orphans', (e) => {
+  settings.deleteOrphans = e.target.checked;
+  if (settings.deleteOrphans) {
+    removeOrphans();
+  }
+});
+
 setupSearch({'topblog': 'topblog', 'spantree': 'spantree'}, 'graphType', 'graph_type', (e) => {
   settings.graphType = e.target.value;
+  if (!settings.keepOnChange) {
+    resetNodes();
+  }
   addToSystem(null, { valuesToLimit: settings.valuesToLimit });
 });
 
 setupSearch({elem1: 1, elem2: 2, elem3: 3, elem5: 5, elem10: 10, elem20: 20, elemall: 50}, 'topElems', 'top_elems', (e) => {
   settings.topElems = parseInt(e.target.value);
+  if (!settings.keepOnChange) {
+    resetNodes();
+  }
   addToSystem(null, { valuesToLimit: settings.valuesToLimit });
 });
 
@@ -149,7 +174,13 @@ for (let year = 10; year <= 22; year++) {
         settings.valuesToLoad.splice( settings.valuesToLoad.indexOf(e.target.value), 1);
       }
     }
+    if (!settings.keepOnChange) {
+      resetNodes();
+    }
+    spanningEdges = [];
+    availableBlogIds.clear();
     addToSystem(null, { valuesToLimit: settings.valuesToLimit });
+    fillBlogSearchList();
   });
 }
 
@@ -489,18 +520,25 @@ function addToSystem(focusBlogId, options = {}) {
   if (nodeBlackList.has(focusBlogId))
     return false;
 
+  let changed = false;
+  if (focusBlogId) {
+    let focusBlog;
+    [changed, focusBlog] = getSystemNode(focusBlogId);
+    console.log(changed);
+  }
+
   options.valuesToLimit ||= 0;
   options.topElems ||= settings.topElems;
 
-  let changed = false;
   if (settings.graphType == 'spantree') {
-    changed = addToSystemSpan(focusBlogId, options);
+    changed |= addToSystemSpan(focusBlogId, options);
   } else {
-    changed = addToSystemTopBlog(focusBlogId, options);
+    changed |= addToSystemTopBlog(focusBlogId, options);
   }
 
   if (changed && !options.skipUpdate) {
     runClustering(true);
+    updateHighlight();
     Graph.graphData(initData);
     if (settings.dag) {
       Graph.dagMode(settings.dag);
@@ -639,7 +677,6 @@ searchBoxOpener.onclick = function(e) {
 }
 
 const searchBox = document.getElementById("search");
-const searchValues = document.getElementById("search-values");
 
 for (let i = 0; i < 37; i++) {
   let child = document.createElement("a");
@@ -672,50 +709,57 @@ child.onclick = function(e) {
 }
 document.getElementById("search-alphabet").appendChild(child);
 
-// top blogs
-let topBlogs = availableBlogs.map(blog => {
-  let node = nodeData.find(node => node.id == blog.id);
-  return { name: blog.name, node: node, value: node ? node.totalVal : 0, id: blog.id };
-}).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
+function fillBlogSearchList() {
+  const searchValues = document.getElementById("search-values");
+  searchValues.innerHTML='';
+  // top blogs
+  let topBlogs = availableBlogs.map(blog => {
+    let node = nodeData.find(node => node.id == blog.id);
+    return { name: blog.name, node: node, value: node ? node.totalVal : 0, id: blog.id };
+  }).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
 
-for (let blog of topBlogs) {
-  if (!blog.node) continue;
-  blog.node.topBlog = true;
-  const child = document.createElement("a");
-  child.href="#";
-  child.textContent = blog.name;
-  child.id=`top-blog-${blog.id}`;
-  child.classList.add("top-blog");
-  child.onclick = (event) => {
-    onNodeClick(blog.id);
-    searchBox.style.display = "none";
-    controls.style.display = "block";
-    event.preventDefault();
-  }
-  searchValues.appendChild(child);
-}
-
-let oldChar = null;
-for (let blog of availableBlogs) {
-  const child = document.createElement("a");
-  child.href="#";
-  child.id=`blog-${blog.id}`;
-  child.textContent = blog.name;
-  if (nodeData.find(node => node.id == blog.id)) {
+  for (let blog of topBlogs) {
+    if (!blog.node) continue;
+    blog.node.topBlog = true;
+    const child = document.createElement("a");
+    child.href="#";
+    child.textContent = blog.name;
+    child.id=`top-blog-${blog.id}`;
     child.classList.add("top-blog");
+    child.onclick = (event) => {
+      onNodeClick(blog.id);
+      searchBox.style.display = "none";
+      controls.style.display = "block";
+      event.preventDefault();
+    }
+    searchValues.appendChild(child);
   }
-  child.onclick = (event) => {
-    onNodeClick(blog.id);
-    searchBox.style.display = "none";
-    controls.style.display = "block";
-    event.preventDefault();
+
+  let oldChar = null;
+  for (let blog of availableBlogs) {
+    const child = document.createElement("a");
+    child.href="#";
+    child.id=`blog-${blog.id}`;
+    child.textContent = blog.name;
+    if (nodeData.find(node => node.id == blog.id)) {
+      child.classList.add("top-blog");
+    }
+    child.onclick = (event) => {
+      onNodeClick(blog.id);
+
+      searchBox.style.display = "none";
+      controls.style.display = "block";
+      event.preventDefault();
+    }
+    if (oldChar != blog.name.charAt(0)) {
+      oldChar = blog.name.charAt(0);
+      child.id = `alphabet-${oldChar}`;
+    }
+    searchValues.appendChild(child);
   }
-  if (oldChar != blog.name.charAt(0)) {
-    oldChar = blog.name.charAt(0);
-    child.id = `alphabet-${oldChar}`;
-  }
-  searchValues.appendChild(child);
 }
+
+fillBlogSearchList();
 
 // zoom to a specific node
 function zoomTo(node, speed = 1000) {
@@ -984,8 +1028,8 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-zoom').onclick = (e) => { autoFocus = node.id; e.preventDefault() };
     document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
     document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
-    document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); e.preventDefault(); };
-    document.getElementById('node-info-ban').onclick = (e) => { deleteNode(node, true); e.preventDefault(); };
+    document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); setTimeout(removeOrphans,500); e.preventDefault(); };
+    document.getElementById('node-info-ban').onclick = (e) => { deleteNode(node, true); setTimeout(removeOrphans,500); e.preventDefault(); };
 
     document.getElementById('node-info').style.display = "block";
   } else {
@@ -1027,7 +1071,7 @@ function openNode(node, includeNeighbors = false, skipUpdate = false) {
   }
 }
 
-function deleteNode(node, blacklist = false) {
+function deleteNode(node, blacklist = false, skipUpdate = false) {
   if (!node) return;
   if (blacklist) {
     nodeBlackList.add(node.id);
@@ -1055,15 +1099,80 @@ function deleteNode(node, blacklist = false) {
     linkData.splice(linkData.indexOf(link), 1);
   });
 
+  if (node.sprite) {
+    node.sprite.material.map.dispose();
+    node.sprite.material.dispose();
+    node.sprite = null;
+  }
+
   delete nodes[node.id];
   nodeData.splice(nodeData.indexOf(node),1);
 
-  Graph.graphData(initData);
-  if (settings.dag) {
-    Graph.dagMode(settings.dag);
+  if (!skipUpdate) {
+    Graph.graphData(initData);
+    if (settings.dag) {
+      Graph.dagMode(settings.dag);
+    }
+
+    runClustering();
+    updateHighlight();
+    fillNodeDetails(null);
+  }
+}
+
+document.getElementById('b-remove-orphans').onclick = (e) => { removeOrphans(true); e.preventDefault(); };
+document.getElementById('b-remove-leaf-nodes').onclick = (e) => { removeOrphans(true, 1); e.preventDefault(); };
+document.getElementById('b-remove-one-link').onclick = (e) => { removeOrphans(true, 1, false); e.preventDefault(); };
+document.getElementById('b-empty-blacklist').onclick = (e) => { nodeBlackList.clear(); fillBlogSearchList(); e.preventDefault(); };
+
+
+function removeOrphans(force = false, linkLimit = 0, checkDualLinks = true) {
+  if (settings.deleteOrphans || force) {
+    let removal = new Set();
+    let changed = false;
+    for (let i = nodeData.length - 1; i >= 0; i--) {
+      if (nodeData[i].links.size == 0) {
+        removal.add(i);
+        changed = true;
+      } else if (nodeData[i].links.size + (checkDualLinks ? Array.from(nodeData[i].links).filter(link => link.linkDirection == 'both').length : 0) <= linkLimit) {
+        removal.add(i);
+        changed = true;
+      }
+    }
+    if (changed) {
+      for (let i = nodeData.length - 1; i >= 0; i--) {
+        if (removal.has(i)) {
+          deleteNode(nodeData[i], false, true);
+        }
+      }
+      Graph.graphData(initData);
+      if (settings.dag) {
+        Graph.dagMode(settings.dag);
+      }
+
+      runClustering();
+      updateHighlight();
+      fillNodeDetails(null);
+      fillBlogSearchList();
+    }
+  }
+}
+
+function resetNodes() {
+  nodeData.forEach(node => {
+    node.val = 0;
+    node.totalVal = 0;
+    node.links = new Set();
+    node.neighborsFrom = new Set();
+    node.neighborsTo = new Set();
+    node.cluster = null;
+    node.openedDepth = null;
+  });
+
+  linkData.splice(0, linkData.length);
+  for (const prop of Object.getOwnPropertyNames(links)) {
+    delete links[prop];
   }
 
-  runClustering();
-  updateHighlight();
-  fillNodeDetails(null);
+  setTimeout(removeOrphans,500);
 }
