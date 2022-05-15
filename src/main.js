@@ -11,7 +11,11 @@ const settings = {
   colorLinks: false,
   colorNodes: false,
   keepOnChange: false,
-  deleteOrphans: false
+  deleteOrphans: false,
+  nodeTransparency: 0.5,
+  linkTransparency: 0.5,
+  selectedLinkTransparency: 0.8,
+  nodeSize: 1
 }
 
 const search = window.location.search ? window.location.search.slice(1, window.location.search.length).split('-') : [];
@@ -630,6 +634,20 @@ document.getElementById("gay-mode").onclick = function(e) {
   e.preventDefault();
 }
 
+let discoMode = null;
+document.getElementById("disco-mode").onclick = function(e) {
+  if (!discoMode) {
+    const discoMode = new THREE.UnrealBloomPass();
+    discoMode.strength = 0.5;
+    discoMode.radius = 2;
+    discoMode.threshold = 0.1;
+    Graph.postProcessingComposer().addPass(discoMode);
+  } else {
+    discoMode.strength = discoMode.strength + 0.25;
+  }
+  e.preventDefault();
+}
+
 document.getElementById("reset-graph").onclick = function(e) {
   nodeData.forEach(node => {
     node.x=Math.random()*100;
@@ -936,32 +954,29 @@ function colorizeNode(node) {
     obj.material.color.setHSL(hsl.h, hsl.s, hsl.l);
   }
 
-  return TinyColor({h: hsl.h*360, s: hsl.s, l: hsl.l, a: 1});
+  return TinyColor({h: hsl.h*360, s: hsl.s, l: hsl.l, a: settings.nodeTransparency});
 }
 
 // obtain the color of the link
 function getLinkColor(link)
 {
   if (link.linkDirection == 'both') {
-    if (highlightLinksBoth.has(link)) {
-      return 'rgba(255,0,0,0.8)';
+    if (highlightLinks.has(link)) {
+      return 'rgba(255,0,0,'+settings.selectedLinkTransparency+')';
     } else {
-      return 'rgba(255,0,0,0.5)';
+      return 'rgba(255,0,0,'+settings.linkTransparency+')';
     }
   }
   if (highlightLinks.has(link)) {
-    if (highlightLinksBoth.has(link)) {
-      return 'rgba(255,0,0,0.8)';
-    }
     if (highlightLinksTo.has(link)) {
-      return 'rgba(255,255,0,0.5)';
+      return 'rgba(255,255,0,'+settings.selectedLinkTransparency+')';
     }
-    return 'rgba(0,255,0,0.5)';
+    return 'rgba(0,255,0,'+settings.selectedLinkTransparency+')';
   }
   if (settings.colorLinks && link.source.cluster) {
-    return TinyColor({h: (link.source.cluster % 20)/20*360, s: 0.75, l: 0.5, a: 0.25});
+    return TinyColor({h: (link.source.cluster % 20)/20*360, s: 0.75, l: 0.5, a: settings.linkTransparency});
   }
-  return 'rgba(255,255,255,0.5)';
+  return 'rgba(255,255,255,'+settings.linkTransparency+')';
 }
 
 // trigger update of highlighted objects in scene

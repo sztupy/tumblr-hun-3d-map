@@ -59,6 +59,13 @@ body {
   padding: 1em;
 }
 
+#config-content a {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 3vmax;
+  margin: 0.5em;
+}
+
 #search-alphabet {
   flex: 0 1 auto;
   text-align: center;
