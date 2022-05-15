@@ -15,6 +15,7 @@ const settings = {
   autoZoom: false,
   nodeTransparency: 0.5,
   linkTransparency: 0.5,
+  linkLength: 300,
   selectedLinkTransparency: 0.8,
   nodeSize: 1
 }
@@ -266,8 +267,8 @@ function getSystemLink(source, target, data) {
   let newLink = {
     source: sourceNode,
     target: targetNode,
-    distance: (1/data[0]) * 300,
-    strength: data[0],
+    distance: (1/data[1]) * settings.linkLength,
+    strength: data[1],
     data: data
   };
 
@@ -528,7 +529,7 @@ function addToSystem(focusBlogId, options = {}) {
   }
 
   if (changed && !options.skipUpdate) {
-    runClustering(true);
+    runClustering();
     updateHighlight();
     Graph.graphData(initData);
     if (settings.dag) {
@@ -563,7 +564,7 @@ function runClustering() {
 
 // initial graph loading, only loading nodes and edges above a certain threshold
 addToSystem(null, { valuesToLimit: settings.valuesToLimit, skipUpdate: true });
-runClustering(false);
+runClustering();
 
 const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: tumblrData.nodes[id] })).sort((a,b) => a.name < b.name ? -1 : 1);
 
@@ -1030,10 +1031,10 @@ document.getElementById("node-info-exit").onclick = (e) => { fillNodeDetails(nul
 function fillNodeDetails(node) {
   let details = '';
   if (node) {
-    details += `Name: ${node.name} <br>`;
-    details += `Strength: ${node.val} (${node.totalVal})<br>`;
-    details += `Cluster: ${node.cluster} <br>`;
-    details += `Neighbours: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
+    details += `Név: ${node.name} <br>`;
+    details += `Izom: ${node.val} (${node.totalVal})<br>`;
+    details += `Csoport: ${node.cluster}<br>`;
+    details += `Szomszédok: ${node.neighborsFrom.size} / ${node.neighborsTo.size}`;
 
     document.getElementById('node-info-zoom').onclick = (e) => { autoFocus = node.id; e.preventDefault() };
     document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
