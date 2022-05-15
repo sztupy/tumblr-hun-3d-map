@@ -37,20 +37,53 @@
           <input type="radio" id="s-control_type-fly" name="control_type" value="fly"><label for="s-control_type-fly" title="Űrhajószimulátor">🚀</label>
           <input type="radio" id="s-control_type-orbit" name="control_type" value="orbit"><label for="s-control_type-orbit" title="Földgömb">🌍</label>
           <input type="radio" id="s-control_type-tracball" name="control_type" value="trackball"><label for="s-control_type-trackball" title="Golyó">🔮</label><br>
-        <hr>
         <h3>Gráf</h3>
-          <h4>Előre betöltött kapcsolatok</h4>
-          <input type="radio" id="s-values_to_limit-minimal" name="values_to_limit" value="50"><label for="s-values_to_limit-minimal" title="Legnagyobb kacspolatok betöltése">Legnagyobbak</label><br>
-          <input type="radio" id="s-values_to_limit-limited" name="values_to_limit" value="25"><label for="s-values_to_limit-limited" title="Főbb kapcsolatok betöltése">Nagyobbak</label><br>
+        <h4>Összekötettések rendezése</h4>
+          <input type="radio" id="s-graph_type-topblog" name="graph_type" value="topblog"><label for="s-graph_type-topblog" title="Legkedveltebb blog alapján">Legkedveltebb blogok</label><br>
+          <input type="radio" id="s-graph_type-spantree" name="graph_type" value="spantree"><label for="s-graph_type-spantree" title="Minimális feszítőfa alapján">Minimális feszítőfa</label><br>
+        <h4>Maximális összekötések száma</h4>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="1"><label for="s-top_elems-1" title="1">1</label>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="2"><label for="s-top_elems-2" title="2">2</label>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="3"><label for="s-top_elems-3" title="3">3</label>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="5"><label for="s-top_elems-5" title="5">5</label>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="10"><label for="s-top_elems-10" title="10">10</label>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="20"><label for="s-top_elems-20" title="20">20</label>
+          <input type="radio" id="s-top_elems-1" name="top_elems" value="50"><label for="s-top_elems-50" title="50">50</label>
+        <h4>Előre betöltött kapcsolatok</h4>
+          <input type="radio" id="s-values_to_limit-onlytop" name="values_to_limit" value="100"><label for="s-values_to_limit-onlytop" title="Legeslegnagyobb kapcsolatok betöltése (>500 interakció)">Csak a legeslegnagyobbak</label><br>
+          <input type="radio" id="s-values_to_limit-limited" name="values_to_limit" value="50"><label for="s-values_to_limit-limited" title="Legnagyobb kapcsolatok betöltése (>50 interakció)">Még nagyobbak</label><br>
+          <input type="radio" id="s-values_to_limit-some" name="values_to_limit" value="25"><label for="s-values_to_limit-some" title="Nagyobb kapcsolatok betöltése (>25 interakció)">Nagyobbak</label><br>
+          <input type="radio" id="s-values_to_limit-most" name="values_to_limit" value="10"><label for="s-values_to_limit-most" title="Majdnem összes kapcsolat betöltése (>10 interakció)">Majdnem összes</label><br>
           <input type="radio" id="s-values_to_limit-full" name="values_to_limit" value="0"><label for="s-values_to_limit-full" title="Összes kapcsolat betöltése">Összes</label>
-        <hr>
+        <h4>Gráf kiterjedése</h4>
+          <input type="radio" id="s-dimensions-2d" name="dimensions" value="2"><label for="s-dimensions-2d" title="2D gráf">2D Gráf</label><br>
+          <input type="radio" id="s-dimensions-3d" name="dimensions" value="3"><label for="s-dimensions-3d" title="3D gráf">3D Gráf</label>
+        <h4>Faszerű ábrázolás</h4>
+          <input type="radio" id="s-dag-nodag" name="dag" value="false"><label for="s-dag-nodag" title="Kikapcsolva">Nem</label><br>
+          <input type="radio" id="s-dag-dag" name="dag" value="td"><label for="s-dag-dag" title="Fentről-lefele">Fentről lefele</label><br>
+          <input type="radio" id="s-dag-rad" name="dag" value="radialin"><label for="s-dag-rad" title="Belülről-kifele">Belülről kifele</label><br>
+          <input type="radio" id="s-dag-dar" name="dag" value="radialout"><label for="s-dag-dar" title="Kívülről-befele">Kívülről befele</label><br>
+        <h3>Adatsor</h3>
+          <input type="checkbox" id="s-year-2010" name="y10" value="2010"><label for="s-year-2010">2010</label>
+          <input type="checkbox" id="s-year-2011" name="y11" value="2011"><label for="s-year-2011">2011</label>
+          <input type="checkbox" id="s-year-2012" name="y12" value="2012"><label for="s-year-2012">2012</label><br>
+          <input type="checkbox" id="s-year-2013" name="y13" value="2013"><label for="s-year-2013">2013</label>
+          <input type="checkbox" id="s-year-2014" name="y14" value="2014"><label for="s-year-2014">2014</label>
+          <input type="checkbox" id="s-year-2015" name="y15" value="2015"><label for="s-year-2015">2015</label><br>
+          <input type="checkbox" id="s-year-2016" name="y16" value="2016"><label for="s-year-2016">2016</label>
+          <input type="checkbox" id="s-year-2017" name="y17" value="2017"><label for="s-year-2017">2017</label>
+          <input type="checkbox" id="s-year-2018" name="y18" value="2018"><label for="s-year-2018">2018</label><br>
+          <input type="checkbox" id="s-year-2019" name="y19" value="2019"><label for="s-year-2019">2019</label>
+          <input type="checkbox" id="s-year-2020" name="y20" value="2020"><label for="s-year-2020">2020</label>
+          <input type="checkbox" id="s-year-2021" name="y21" value="2021"><label for="s-year-2021">2021</label><br>
+          <input type="checkbox" id="s-year-2022" name="y22" value="current"><label for="s-year-2022">2022</label>
         <h3>Megjelenés</h3>
           <input type="radio" id="s-display_type-spheres" name="display_type" value="spheres"><label for="s-display_type-spheres" title="Bogyók">Golyók</label><br>
           <input type="radio" id="s-display_type-top50" name="display_type" value="top50"><label for="s-display_type-top50" title="Top 50 cimkézve">Top blogok cimkézve</label><br>
           <input type="radio" id="s-display_type-labels" name="display_type" value="labels"><label for="s-display_type-labels" title="Cimkék">Összes blog cimkézve</label>
         <h3>Színek</h3>
-          <input type="checkbox" id="s-colornodes" name="colornodes" value="colornodes"><label for="s-colornodes">Színblog</label><br>
-          <input type="checkbox" id="s-colorlinks" name="colorlinks" value="colorlinks"><label for="s-colorlinks">Színvonal</label><br>
+          <input type="checkbox" id="s-colornodes" name="colornodes" value="true"><label for="s-colornodes">Színblog</label><br>
+          <input type="checkbox" id="s-colorlinks" name="colorlinks" value="true"><label for="s-colorlinks">Színvonal</label><br>
         </form>
       </div>
     </div>

@@ -4,8 +4,8 @@ const settings = {
   graphType: 'topblog',
   topElems: 1,
   labelLoadPerTick: 10000000,
-  valuesToLimit: 50,
-  valuesToLoad: ["2019","2020","2021","current"],
+  valuesToLimit: 100,
+  valuesToLoad: [],
   dimensions: 3,
   dag: false,
   colorLinks: false,
@@ -20,23 +20,38 @@ function updateSettings() {
   let form = document.forms[0];
   for (let name in settingConfig) {
     let map = settingConfig[name];
-    result.push(map[form[name].value]);
+    if (form[name].type !== "checkbox" || form[name].checked) {
+      result.push(map[form[name].value]);
+    }
   }
   return result.join('-');
 }
 
 function setupSearch(mapping, settingName, formElement, formFunction) {
-  let value = settings[settingName];
+  let value;
+  if (typeof settingName === 'function') {
+    value = settingName();
+  } else {
+    value = settings[settingName];
+  }
+
   for (let name in mapping) {
     let result;
-    if (result = search.find(s => s == name || s.startsWith(name+"_"))) {
-      settings[settingName] = mapping[name];
+    if (search.indexOf(name) !== -1) {
+      if (typeof settingName === 'function') {
+        settingName(mapping[name]);
+      } else {
+        settings[settingName] = mapping[name];
+      }
       value = mapping[name];
+      break;
+    }
+    if (result = search.find(s => s.startsWith(name+"_"))) {
       break;
     }
   }
 
-  settingConfig[formElement] = Object.fromEntries(Object.entries(mapping).map(([key, value]) => [value, key]));
+  settingConfig[formElement] = Object.fromEntries(Object.entries(mapping).map(([key, value]) => [value+"", key]));
 
   document.getElementsByName(formElement).forEach(e => {
     e.onchange = (e) => {
@@ -63,6 +78,7 @@ setupSearch({ fly: 'fly', orbit: 'orbit', trackball: 'trackball'}, 'controlType'
 
   Graph.setNewControls(e.target.value);
 });
+
 setupSearch({ labels: 'labels', top50: 'top50', spheres: 'spheres'}, 'displayType', 'display_type', (e) => {
   settings.displayType = e.target.value;
   if (settings.displayType != 'labels') {
@@ -70,54 +86,82 @@ setupSearch({ labels: 'labels', top50: 'top50', spheres: 'spheres'}, 'displayTyp
   }
   updateHighlight();
 });
-setupSearch({ full: 0, limited: 25, minimal: 50 }, 'valuesToLimit', 'values_to_limit', (e) => {
-  settings.valuesToLimit = parseInt(e.target.value);
 
+setupSearch({ full: 0, most: 10, some: 25, limited: 50, onlytop: 100 }, 'valuesToLimit', 'values_to_limit', (e) => {
+  settings.valuesToLimit = parseInt(e.target.value);
+  addToSystem(null, { valuesToLimit: settings.valuesToLimit });
 });
+
+setupSearch({ '2d': 2, '3d': 3}, 'dimensions', 'dimensions', (e) => {
+  settings.dimensions = parseInt(e.target.value);
+  Graph.numDimensions(settings.dimensions);
+});
+
+setupSearch({'dag': 'td', 'rad': 'radialin', 'dar': 'radialout', 'nodag': false}, 'dag', 'dag', (e) => {
+  settings.dag = e.target.value == "false" ? false : e.target.value;
+  Graph.dagMode(settings.dag);
+});
+
+setupSearch({'colorlinks': true, 'bwlinks': false}, 'colorLinks', 'colorlinks', (e) => {
+  settings.colorLinks = e.target.checked;
+  updateHighlight();
+  updateSettings();
+});
+
+setupSearch({'colornodes': true, 'bwnodes': false}, 'colorNodes', 'colornodes', (e) => {
+  settings.colorNodes = e.target.checked;
+  updateHighlight();
+  updateSettings();
+});
+
+setupSearch({'topblog': 'topblog', 'spantree': 'spantree'}, 'graphType', 'graph_type', (e) => {
+  settings.graphType = e.target.value;
+  addToSystem(null, { valuesToLimit: settings.valuesToLimit });
+});
+
+setupSearch({elem1: 1, elem2: 2, elem3: 3, elem5: 5, elem10: 10, elem20: 20, elemall: 50}, 'topElems', 'top_elems', (e) => {
+  settings.topElems = parseInt(e.target.value);
+  addToSystem(null, { valuesToLimit: settings.valuesToLimit });
+});
+
+settings.valuesToLoad = [];
+
+for (let year = 10; year <= 22; year++) {
+  let key = `y${year}`;
+  let value = year == 22 ? "current" : `20${year}`;
+
+  let map = {};
+  map[key] = value;
+
+  setupSearch(map, (e) => {
+    if (!e) {
+      return false;
+    } else {
+      settings.valuesToLoad.push(e);
+    }
+  }, key, (e) => {
+    if (e.target.checked) {
+      if (settings.valuesToLoad.indexOf(e.target.value) === -1) {
+        settings.valuesToLoad.push(e.target.value);
+      }
+    } else {
+      if (settings.valuesToLoad.indexOf(e.target.value) !== -1) {
+        settings.valuesToLoad.splice( settings.valuesToLoad.indexOf(e.target.value), 1);
+      }
+    }
+    addToSystem(null, { valuesToLimit: settings.valuesToLimit });
+  });
+}
+
+if (settings.valuesToLoad.length == 0) {
+  settings.valuesToLoad = ["2019","2020","2021","current"];
+  for (let year=19; year<=22; year++) {
+    document.getElementsByName(`y${year}`)[0].checked = true;
+  }
+}
 
 // load up initial configuration from the URL
 if (window.location.search) {
-  if (search.indexOf('2d') != -1) {
-    settings.dimensions = 2;
-  } else if (search.indexOf('3d') != -1) {
-    settings.dimensions = 3;
-  }
-
-  if (search.indexOf('dag') != -1) {
-    settings.dag = 'zin';
-  } else if (search.indexOf('rad') != -1) {
-    settings.dag = 'radialin';
-  } else if (search.indexOf('dar') != -1) {
-    settings.dag = 'radialout';
-  }
-
-  if (search.indexOf('colorlinks') != -1) {
-    settings.colorLinks = true;
-  } else if (search.indexOf('bwlinks') != -1) {
-    settings.colorLinks = false;
-  }
-  let checkboxColorLinks = document.getElementById('s-colorlinks');
-  checkboxColorLinks.checked = settings.colorLinks;
-  checkboxColorLinks.oninput = function(e) {
-    settings.colorLinks = e.target.checked;
-    updateHighlight();
-    updateSettings();
-  }
-
-  if (search.indexOf('colornodes') != -1) {
-    settings.colorNodes = true;
-  } else if (search.indexOf('bwnodes') != -1) {
-    settings.colorNodes = false;
-  }
-  let checkboxColorNodes = document.getElementById('s-colornodes');
-  checkboxColorNodes.checked = settings.colorNodes;
-  checkboxColorNodes.oninput = function(e) {
-    settings.colorNodes = e.target.checked;
-    updateHighlight();
-    updateSettings();
-  }
-
-
   let years;
   if (years = search.find(name => name.startsWith('years'))) {
     let load = [];
@@ -130,32 +174,6 @@ if (window.location.search) {
 
     if (load.length > 0) {
       settings.valuesToLoad = load.filter((v, i, a) => a.indexOf(v) === i);
-    }
-  }
-
-  let topblog;
-  if (topblog = search.find(name => name.startsWith('topblog'))) {
-    settings.graphType = 'topblog';
-    settings.topElems = 1;
-    let match;
-    if (match = topblog.match(/topblog_(\d+)/)) {
-      settings.topElems = parseInt(match[1]);
-      if (settings.topElems<=0 || settings.topElems>100) {
-        settings.topElems = 1;
-      }
-    }
-  }
-
-  let spantree;
-  if (spantree = search.find(name => name.startsWith('spantree'))) {
-    settings.graphType = 'spantree';
-    settings.topElems = 1;
-    let match;
-    if (match = spantree.match(/spantree_(\d+)/)) {
-      settings.topElems = parseInt(match[1]);
-      if (settings.topElems<=0 || settings.topElems>100) {
-        settings.topElems = 1;
-      }
     }
   }
 }
@@ -175,6 +193,8 @@ const availableBlogIds = new Set();
 let maxMaxValue = 0;
 const allData = tumblrData.years['all'];
 const present = {};
+
+console.log(settings);
 
 // loads a node from the tumblr database into the graph system
 function getSystemNode(id) {
@@ -377,8 +397,10 @@ function addEdgeToSystem(focusBlogId, sourceBlogId, targetBlogId, value, data) {
   if (original) {
     if (original.linkDirection != 'both') {
       original.linkDirection = 'both';
+      original.backValue = value
+      original.backData = data;
       changed = true;
-      if (!settings.dag) getSystemLink(source, destination, data);
+      //if (!settings.dag) getSystemLink(source, destination, data);
     }
   } else {
     getSystemLink(source, destination, data);
@@ -527,7 +549,7 @@ window.onload = function() {
     .nodeColor(node => colorizeNode(node))
     .nodeVal(node => node.totalVal)
     .nodeRelSize(1)
-    .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})`)
+    .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})` + (link.backData ? `<br>${link.target.name} -> ${link.source.name}  (${link.backData[0]}, ${link.backData[1]})` : ''))
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
     .linkDirectionalParticleWidth(0.5)
@@ -538,11 +560,12 @@ window.onload = function() {
     .nodeThreeObject(getNodeObject)
     .onNodeClick(onNodeClick)
     .onLinkClick(link => onNodeClick(link.source))
-    .graphData(initData);
+    .graphData(initData)
+    .onDagError(function(n) { console.log('Error in DAG: ', n)});
 
-  if (settings.dag) {
-    Graph.dagMode(settings.dag).onDagError(function(n) { console.log('Error in DAG: ', n)});
-  }
+    if (settings.dag) {
+      Graph.dagMode(settings.dag)
+    }
 };
 
 const ForceLink = Graph
