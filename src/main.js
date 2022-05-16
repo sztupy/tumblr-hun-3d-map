@@ -18,7 +18,6 @@ const settings = {
   nodeTransparency: 0.75,
   selectedNodeTransparency: 1.0,
   linkTransparency: 0.5,
-  linkLength: 300,
   selectedLinkTransparency: 0.8,
   nodeSize: 1
 }
@@ -315,7 +314,7 @@ function getSystemLink(source, target, data) {
   let newLink = {
     source: sourceNode,
     target: targetNode,
-    distance: (1/data[1]) * settings.linkLength,
+    distance: (1/data[1]) * 300,
     strength: data[1],
     data: data
   };
@@ -652,16 +651,16 @@ window.onload = function() {
     }
 };
 
-const ForceLink = Graph
-  .d3Force('link')
-  .distance(link => link.distance)
- // .strength(link => 1 - link.strength / maxMaxValue * 0.8);
+// const ForceLink = Graph
+//   .d3Force('link')
+//   .distance(link => link.distance)
+//  // .strength(link => 1 - link.strength / maxMaxValue * 0.8);
 
-const ForceCharge = Graph
-  .d3Force('charge')
-  .strength(-50);
+// const ForceCharge = Graph
+//   .d3Force('charge')
+//   .strength(-50);
 
-const ForceCenter = Graph.d3Force('center').strength(0.01);
+// const ForceCenter = Graph.d3Force('center').strength(0.01);
 
 // handle the controls on the right
 const controls = document.getElementById("controls");
