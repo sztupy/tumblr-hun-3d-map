@@ -1386,3 +1386,56 @@ function fillStats() {
 }
 
 fillStats();
+
+let projectiles = [];
+let nextLeft = false;
+const geometry = new THREE.SphereGeometry( 15, 32, 16 );
+const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+
+window.addEventListener('keydown', (e) => {
+  if (e.key == ' ') {
+    const proj = {
+      sphere: new THREE.Mesh( geometry, material ),
+      count: 0,
+      tick: function() {
+        proj.count += 1;
+
+        for (let node of nodeData) {
+          if (node.__threeObj) {
+            if (node.__threeObj.position.distanceTo(proj.sphere.position) < 40) {
+              scene.remove(proj.sphere);
+              projectiles.splice(projectiles.indexOf(proj), 1);
+              deleteNode(node);
+              setTimeout(removeOrphans,500);
+              break;
+            }
+          }
+        }
+
+        if (proj.count < 150) {
+          proj.sphere.translateZ(100);
+          requestAnimationFrame(proj.tick);
+        } else {
+          scene.remove(proj.sphere);
+          projectiles.splice(projectiles.indexOf(proj), 1);
+        }
+      }
+    }
+
+    nextLeft = !nextLeft;
+
+    const startPos = new THREE.Vector3(nextLeft ? 50: -50, 0, 0);
+    startPos.applyMatrix4(Graph.camera().matrixWorld);
+
+    const endPos = new THREE.Vector3(0, 0, -10000);
+    endPos.applyMatrix4(Graph.camera().matrixWorld);
+
+    Graph.scene().add( proj.sphere );
+
+    proj.sphere.position.lerp(startPos,1);
+    proj.sphere.lookAt(endPos);
+    proj.tick();
+
+    projectiles.push(proj);
+  }
+});
