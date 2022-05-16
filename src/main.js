@@ -1391,6 +1391,21 @@ let projectiles = [];
 let nextLeft = false;
 const geometry = new THREE.SphereGeometry( 15, 32, 16 );
 const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+let audioListener = null;
+let laserBuffer = null;
+let explosionBuffer = null;
+
+audioListener = new THREE.AudioListener();
+Graph.camera().add( audioListener );
+
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load( 'img/466867__mikee63__blaster-shot-single-5.wav', function( buffer ) {
+  laserBuffer = buffer;
+});
+audioLoader.load( 'img/587196__derplayer__explosion-06.wav', function( buffer ) {
+  explosionBuffer = buffer;
+});
+
 
 window.addEventListener('keydown', (e) => {
   if (e.key == ' ') {
@@ -1402,7 +1417,16 @@ window.addEventListener('keydown', (e) => {
 
         for (let node of nodeData) {
           if (node.__threeObj) {
-            if (node.__threeObj.position.distanceTo(proj.sphere.position) < 40) {
+            if (node.__threeObj.position.distanceToSquared(proj.sphere.position) < 65*65) {
+              if (explosionBuffer) {
+                const sound = new THREE.PositionalAudio( audioListener );
+                sound.setBuffer( explosionBuffer );
+                sound.setRefDistance( 20 );
+                sound.play();
+
+                proj.sphere.add( sound );
+              }
+
               scene.remove(proj.sphere);
               projectiles.splice(projectiles.indexOf(proj), 1);
               deleteNode(node);
@@ -1424,7 +1448,7 @@ window.addEventListener('keydown', (e) => {
 
     nextLeft = !nextLeft;
 
-    const startPos = new THREE.Vector3(nextLeft ? 50: -50, 0, 0);
+    const startPos = new THREE.Vector3(nextLeft ? 50: -50, 0, 100);
     startPos.applyMatrix4(Graph.camera().matrixWorld);
 
     const endPos = new THREE.Vector3(0, 0, -10000);
@@ -1435,6 +1459,15 @@ window.addEventListener('keydown', (e) => {
     proj.sphere.position.lerp(startPos,1);
     proj.sphere.lookAt(endPos);
     proj.tick();
+
+    if (laserBuffer) {
+      const sound = new THREE.PositionalAudio( audioListener );
+      sound.setBuffer( laserBuffer );
+      sound.setRefDistance( 20 );
+      sound.play();
+
+      proj.sphere.add( sound );
+    }
 
     projectiles.push(proj);
   }
