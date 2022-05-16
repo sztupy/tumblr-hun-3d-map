@@ -19,6 +19,7 @@ const settings = {
   selectedNodeTransparency: 1.0,
   linkTransparency: 0.5,
   selectedLinkTransparency: 0.8,
+  selectedLinkWidth: 8,
   nodeSize: 1
 }
 
@@ -203,6 +204,11 @@ setupSearch('sltr','selectedLinkTransparency','selected_link_transparency', (e) 
 
 setupSearch('nsz','nodeSize','node_size', (e) => {
   settings.nodeSize = parseFloat(e.target.value);
+  updateHighlight();
+});
+
+setupSearch('slsz','selectedLinkWidth','selected_link_size', (e) => {
+  settings.selectedLinkWidth = parseFloat(e.target.value);
   updateHighlight();
 });
 
@@ -469,6 +475,7 @@ function addEdgeToSystem(focusBlogId, sourceBlogId, targetBlogId, value, data) {
       original.linkDirection = 'both';
       original.backValue = value
       original.backData = data;
+      original.distance = (1 / Math.max(original.data[1], data[1])) * 300;
       changed = true;
       //if (!settings.dag) getSystemLink(source, destination, data);
     }
@@ -634,7 +641,7 @@ window.onload = function() {
     .nodeVal(node => node.totalVal)
     .nodeRelSize(settings.nodeSize)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})` + (link.backData ? `<br>${link.target.name} -> ${link.source.name}  (${link.backData[0]}, ${link.backData[1]})` : ''))
-    .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
+    .linkWidth(link => highlightLinks.has(link) ? settings.selectedLinkWidth : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
     .linkDirectionalParticleWidth(0.5)
     .linkOpacity(1)
@@ -888,6 +895,63 @@ window.addEventListener('resize', function() {
   Graph.height(document.body.clientHeight);
 });
 
+let searchResults = [];
+function findShortestPath(startNode, endNode) {
+  searchResults = [];
+  for (let n of nodeData) {
+    n.searchParentNode = null;
+    n.searchParentEdge = null;
+    n.searchCost = null;
+  }
+
+  let node = startNode;
+
+  let frontierNodes = [];
+  frontierNodes.push(startNode);
+  startNode.searchCost = 0;
+
+  let expanded = new Set();
+
+  while (true) {
+    if (frontierNodes.length == 0) return;
+    frontierNodes.sort((a,b) => b.searchCost - a.searchCost);
+
+    node = frontierNodes.pop();
+
+    if (node == endNode) {
+      while (node != null) {
+        if (node.searchParentEdge)
+          highlightLinks.add(node.searchParentEdge);
+        searchResults.push(node);
+        node = node.searchParentNode;
+      }
+      return;
+    }
+
+    expanded.add(node);
+
+    for (let edge of node.links) {
+      let otherNode = edge.source;
+      if (otherNode == node) otherNode = edge.target;
+
+      if (!expanded.has(otherNode)) {
+        if (otherNode.searchCost) {
+          if (node.searchCost + edge.distance < otherNode.searchCost) {
+            otherNode.searchParentNode = node;
+            otherNode.searchParentEdge = edge;
+            otherNode.searchCost = node.searchCost + edge.distance;
+          }
+        } else {
+          otherNode.searchParentNode = node;
+          otherNode.searchParentEdge = edge;
+          otherNode.searchCost = node.searchCost + edge.distance;
+          frontierNodes.push(otherNode);
+        }
+      }
+    }
+  }
+}
+
 const highlightLinks = new Set();
 const highlightLinksTo = new Set();
 const highlightLinksBoth = new Set();
@@ -915,16 +979,25 @@ function onNodeClick(node) {
       node.z = 0;
     }
 
-    hightlightNodes.add(node);
-    node.neighborsTo.forEach(node => hightlightNodes.add(node));
-    node.neighborsFrom.forEach(node => hightlightNodes.add(node));
-    node.links.forEach(link => highlightLinks.add(link));
-    Array.from(node.links).filter(link => link.source == node).forEach(link => link.target.neighborsTo.has(node) ? highlightLinksBoth.add(link) : highlightLinksTo.add(link));
-    Array.from(node.links).filter(link => link.target == node).forEach(link => link.source.neighborsFrom.has(node) ? highlightLinksBoth.add(link) : null);
+    if (startPoint && nodes[startPoint.id]) {
+      findShortestPath(startPoint, node);
+      startPoint = null;
+    } else {
+      hightlightNodes.add(node);
+      node.neighborsTo.forEach(node => hightlightNodes.add(node));
+      node.neighborsFrom.forEach(node => hightlightNodes.add(node));
+      node.links.forEach(link => highlightLinks.add(link));
+      Array.from(node.links).filter(link => link.source == node).forEach(link => link.target.neighborsTo.has(node) ? highlightLinksBoth.add(link) : highlightLinksTo.add(link));
+      Array.from(node.links).filter(link => link.target == node).forEach(link => link.source.neighborsFrom.has(node) ? highlightLinksBoth.add(link) : null);
+      fillNodeDetails(node);
+      hoverNode = node;
+    }
+  } else {
+    fillNodeDetails(null);
+    hoverNode = null;
+    startPoint = null;
   }
 
-  fillNodeDetails(node);
-  hoverNode = node || null;
   updateHighlight();
 
   if (settings.autoZoom) {
@@ -1093,6 +1166,8 @@ function getNodeLabel(node) {
   return node.name;
 }
 
+let startPoint = null;
+
 document.getElementById("node-info-exit").onclick = (e) => { fillNodeDetails(null); onNodeClick(null); e.preventDefault(); }
 // node modification tools
 function fillNodeDetails(node) {
@@ -1106,6 +1181,7 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-zoom').onclick = (e) => { autoFocus = node.id; e.preventDefault() };
     document.getElementById('node-info-add').onclick = (e) => { openNode(node); e.preventDefault(); };
     document.getElementById('node-info-add-all').onclick = (e) => { openNode(node, true, false); e.preventDefault(); };
+    document.getElementById('node-info-path').onclick = (e) => { startPoint = node; e.preventDefault(); };
     document.getElementById('node-info-delete').onclick = (e) => { deleteNode(node); setTimeout(removeOrphans,500); e.preventDefault(); };
     document.getElementById('node-info-ban').onclick = (e) => { deleteNode(node, true); setTimeout(removeOrphans,500); e.preventDefault(); };
 
@@ -1115,6 +1191,7 @@ function fillNodeDetails(node) {
     document.getElementById('node-info-zoom').onclick = prevDefault;
     document.getElementById('node-info-add').onclick = prevDefault;
     document.getElementById('node-info-add-all').onclick = prevDefault;
+    document.getElementById('node-info-path').onclick = prevDefault;
     document.getElementById('node-info-delete').onclick = prevDefault;
     document.getElementById('node-info-ban').onclick = prevDefault;
     document.getElementById('node-info').style.display = "none";
@@ -1293,6 +1370,16 @@ function fillStats() {
       text += `<li>${link.source.name} -> ${link.target.name}: ${link.data[0]} / ${link.data[1]}</li>`;
     }
     text += `</ol>`;
+
+    if (searchResults.length != 0) {
+      text += `<h5>Legrövidebb út</h5>`;
+      text += `<ol>`;
+      for (const node of searchResults) {
+        text += `<li>${node.name} (${node.searchCost})</li>`;
+      }
+      text += `</ol>`;
+
+    }
   }
 
   document.getElementById('stats-content').innerHTML = text;
