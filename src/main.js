@@ -13,7 +13,10 @@ const settings = {
   keepOnChange: false,
   deleteOrphans: false,
   autoZoom: false,
-  nodeTransparency: 0.5,
+  allowNodeMove: false,
+  allowControls: true,
+  nodeTransparency: 0.75,
+  selectedNodeTransparency: 1.0,
   linkTransparency: 0.5,
   linkLength: 300,
   selectedLinkTransparency: 0.8,
@@ -27,9 +30,13 @@ function updateSettings() {
   let result = [];
   let form = document.forms[0];
   for (let name in settingConfig) {
-    let map = settingConfig[name];
-    if (form[name].type !== "checkbox" || form[name].checked) {
-      result.push(map[form[name].value]);
+    if (typeof settingConfig[name] === 'string') {
+      result.push(settingConfig[name] + '_' + form[name].value);
+    } else {
+      let map = settingConfig[name];
+      if (form[name].type !== "checkbox" || form[name].checked) {
+        result.push(map[form[name].value]);
+      }
     }
   }
   return result.join('-');
@@ -43,23 +50,29 @@ function setupSearch(mapping, settingName, formElement, formFunction) {
     value = settings[settingName];
   }
 
-  for (let name in mapping) {
+  if (typeof mapping == 'string') {
+    settingConfig[formElement] = mapping;
     let result;
-    if (search.indexOf(name) !== -1) {
-      if (typeof settingName === 'function') {
-        settingName(mapping[name]);
-      } else {
-        settings[settingName] = mapping[name];
-      }
-      value = mapping[name];
-      break;
+    if (result = search.find(s => s.startsWith(mapping+"_"))) {
+      let extracted = result.split('_')[1];
+      settings[settingName] = parseFloat(extracted);
+      value = parseFloat(extracted);
     }
-    if (result = search.find(s => s.startsWith(name+"_"))) {
-      break;
+  } else {
+    settingConfig[formElement] = Object.fromEntries(Object.entries(mapping).map(([key, value]) => [value+"", key]));
+
+    for (let name in mapping) {
+      if (search.indexOf(name) !== -1) {
+        if (typeof settingName === 'function') {
+          settingName(mapping[name]);
+        } else {
+          settings[settingName] = mapping[name];
+        }
+        value = mapping[name];
+        break;
+      }
     }
   }
-
-  settingConfig[formElement] = Object.fromEntries(Object.entries(mapping).map(([key, value]) => [value+"", key]));
 
   document.getElementsByName(formElement).forEach(e => {
     e.onchange = (e) => {
@@ -71,9 +84,12 @@ function setupSearch(mapping, settingName, formElement, formFunction) {
         window.history.replaceState(null,'',"test.html?"+newSettings);
       }
     }
-
-    if (e.value === value+"") {
-      e.checked = true;
+    if (typeof mapping === 'string') {
+      e.value = value+"";
+    } else {
+      if (e.value === value+"") {
+        e.checked = true;
+      }
     }
   });
 }
@@ -119,13 +135,11 @@ setupSearch({'dag': 'td', 'rad': 'radialin', 'dar': 'radialout', 'nodag': false}
 setupSearch({'clink': true}, 'colorLinks', 'colorlinks', (e) => {
   settings.colorLinks = e.target.checked;
   updateHighlight();
-  updateSettings();
 });
 
 setupSearch({'cnode': true}, 'colorNodes', 'colornodes', (e) => {
   settings.colorNodes = e.target.checked;
   updateHighlight();
-  updateSettings();
 });
 
 setupSearch({'keepchg': true}, 'keepOnChange', 'keep_on_change', (e) => {
@@ -134,6 +148,15 @@ setupSearch({'keepchg': true}, 'keepOnChange', 'keep_on_change', (e) => {
 
 setupSearch({'autozoom': true}, 'autoZoom', 'auto_zoom', (e) => {
   settings.autoZoom = e.target.checked;
+});
+
+setupSearch({'ctrl': true}, 'allowControls', 'allow_controls', (e) => {
+  settings.allowControls = e.target.checked;
+  Graph.enableNavigationControls(settings.allowControls);
+});
+
+setupSearch({'nodedrag': true}, 'allowNodeMove', 'allow_node_move', (e) => {
+  return 'redirect';
 });
 
 setupSearch({'noorph': true}, 'deleteOrphans', 'delete_orphans', (e) => {
@@ -157,6 +180,31 @@ setupSearch({elem1: 1, elem2: 2, elem3: 3, elem5: 5, elem10: 10, elem20: 20, ele
     resetNodes();
   }
   addToSystem(null, { valuesToLimit: settings.valuesToLimit });
+});
+
+setupSearch('ntr','nodeTransparency','node_transparency', (e) => {
+  settings.nodeTransparency = parseFloat(e.target.value);
+  updateHighlight();
+});
+
+setupSearch('sntr','selectedNodeTransparency','selected_node_transparency', (e) => {
+  settings.selectedNodeTransparency = parseFloat(e.target.value);
+  updateHighlight();
+});
+
+setupSearch('ltr','linkTransparency','link_transparency', (e) => {
+  settings.linkTransparency = parseFloat(e.target.value);
+  updateHighlight();
+});
+
+setupSearch('sltr','selectedLinkTransparency','selected_link_transparency', (e) => {
+  settings.selectedLinkTransparency = parseFloat(e.target.value);
+  updateHighlight();
+});
+
+setupSearch('nsz','nodeSize','node_size', (e) => {
+  settings.nodeSize = parseFloat(e.target.value);
+  updateHighlight();
 });
 
 settings.valuesToLoad = [];
@@ -574,11 +622,16 @@ const elem = document.getElementById('3d-graph');
 const Graph = ForceGraph3D({ controlType: settings.controlType })(elem)
 
 window.onload = function() {
-  Graph.enableNodeDrag(false)
+  Graph.enableNodeDrag(settings.allowNodeMove)
+    .onNodeDragEnd(node => {
+      node.fx = node.x;
+      node.fy = node.y;
+      node.fz = node.z;
+    })
     .linkColor(getLinkColor)
     .nodeColor(node => colorizeNode(node))
     .nodeVal(node => node.totalVal)
-    .nodeRelSize(1)
+    .nodeRelSize(settings.nodeSize)
     .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})` + (link.backData ? `<br>${link.target.name} -> ${link.source.name}  (${link.backData[0]}, ${link.backData[1]})` : ''))
     .linkWidth(link => highlightLinks.has(link) ? 1 + link.data[1] / maxMaxValue * 8 : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
@@ -591,6 +644,7 @@ window.onload = function() {
     .onNodeClick(onNodeClick)
     .onLinkClick(link => onNodeClick(link.source))
     .graphData(initData)
+    .enableNavigationControls(settings.allowControls)
     .onDagError(function(n) { console.log('Error in DAG: ', n)});
 
     if (settings.dag) {
@@ -886,7 +940,7 @@ function getSprite(node) {
   let sprite = new SpriteText(node.name);
   sprite.backgroundColor = "white";
   sprite.color = "black";
-  sprite.textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 30);
+  sprite.textHeight = (1 + Math.sqrt(node.val) / Math.sqrt(maxMaxValue) * 50);
   sprite.padding = 0.5;
   sprite.borderWidth = 0.2;
   sprite.borderColor = "black";
@@ -910,6 +964,14 @@ function getNodeObject(node) {
 
   if (node.sprite) {
     result = node.sprite;
+
+    if (node.sprite.currentSize != settings.nodeSize) {
+      if (!node.sprite.originalDimensions) {
+        node.sprite.originalDimensions = node.sprite.scale.clone();
+      }
+      node.sprite.scale.set(settings.nodeSize * node.sprite.originalDimensions.x, settings.nodeSize * node.sprite.originalDimensions.y, 0);
+      node.sprite.curentSize = settings.nodeSize;
+    }
   }
 
   colorizeNode(node);
@@ -948,9 +1010,10 @@ function colorizeNode(node) {
 
   if (obj) {
     obj.material.color.setHSL(hsl.h, hsl.s, hsl.l);
+    obj.material.opacity = hightlightNodes.has(node) ? settings.selectedNodeTransparency : settings.nodeTransparency;
   }
 
-  return TinyColor({h: hsl.h*360, s: hsl.s, l: hsl.l, a: settings.nodeTransparency});
+  return TinyColor({h: hsl.h*360, s: hsl.s, l: hsl.l, a: hightlightNodes.has(node) ? settings.selectedNodeTransparency : settings.nodeTransparency});
 }
 
 // obtain the color of the link
@@ -978,6 +1041,7 @@ function getLinkColor(link)
 // trigger update of highlighted objects in scene
 function updateHighlight() {
   Graph
+    .nodeRelSize(settings.nodeSize)
     .linkColor(Graph.linkColor())
     .linkWidth(Graph.linkWidth())
     .nodeThreeObject(Graph.nodeThreeObject())
