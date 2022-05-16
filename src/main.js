@@ -1256,9 +1256,11 @@ function deleteNode(node, blacklist = false, skipUpdate = false) {
   });
 
   if (node.sprite) {
-    node.sprite.material.map.dispose();
-    node.sprite.material.dispose();
-    node.sprite = null;
+    setTimeout(() => {
+      node.sprite.material.map.dispose();
+      node.sprite.material.dispose();
+      node.sprite = null;
+    },1);
   }
 
   delete nodes[node.id];
@@ -1406,7 +1408,6 @@ audioLoader.load( 'img/587196__derplayer__explosion-06.wav', function( buffer ) 
   explosionBuffer = buffer;
 });
 
-
 window.addEventListener('keydown', (e) => {
   if (e.key == ' ') {
     const proj = {
@@ -1415,33 +1416,43 @@ window.addEventListener('keydown', (e) => {
       tick: function() {
         proj.count += 1;
 
+        let nodesToDelete = [];
+
         for (let node of nodeData) {
           if (node.__threeObj) {
             if (node.__threeObj.position.distanceToSquared(proj.sphere.position) < 65*65) {
-              if (explosionBuffer) {
-                const sound = new THREE.PositionalAudio( audioListener );
-                sound.setBuffer( explosionBuffer );
-                sound.setRefDistance( 20 );
-                sound.play();
-
-                proj.sphere.add( sound );
-              }
-
-              scene.remove(proj.sphere);
-              projectiles.splice(projectiles.indexOf(proj), 1);
-              deleteNode(node);
-              setTimeout(removeOrphans,500);
-              break;
+              nodesToDelete.push(node);
             }
           }
         }
 
-        if (proj.count < 150) {
-          proj.sphere.translateZ(100);
-          requestAnimationFrame(proj.tick);
+        if (nodesToDelete.length == 0) {
+          if (proj.count < 150) {
+            proj.sphere.translateZ(100);
+            requestAnimationFrame(proj.tick);
+          } else {
+            scene.remove(proj.sphere);
+            projectiles.splice(projectiles.indexOf(proj), 1);
+          }
         } else {
           scene.remove(proj.sphere);
           projectiles.splice(projectiles.indexOf(proj), 1);
+
+          if (explosionBuffer) {
+            const sound = new THREE.PositionalAudio( audioListener );
+            sound.setBuffer( explosionBuffer );
+            sound.setRefDistance( 20 );
+            sound.play();
+
+            proj.sphere.add( sound );
+          }
+
+          for (let node of nodesToDelete) {
+            deleteNode(node, false, true);
+          }
+          Graph.graphData(initData);
+          runClustering();
+          setTimeout(removeOrphans,500);
         }
       }
     }
