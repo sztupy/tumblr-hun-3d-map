@@ -595,6 +595,7 @@ function setCluster(node, cluster) {
   node.neighborsTo.forEach(n => setCluster(n, cluster));
 }
 
+let numClusters = 0;
 function runClustering() {
   let currentCluster = 0;
   for (let node of nodeData) {
@@ -607,6 +608,7 @@ function runClustering() {
       setCluster(node, currentCluster);
     }
   }
+  numClusters = currentCluster;
 }
 
 // initial graph loading, only loading nodes and edges above a certain threshold
@@ -1045,6 +1047,8 @@ function updateHighlight() {
     .linkWidth(Graph.linkWidth())
     .nodeThreeObject(Graph.nodeThreeObject())
     .linkDirectionalParticles(Graph.linkDirectionalParticles());
+
+  fillStats();
 }
 
 let gayModeRunning = false;
@@ -1138,10 +1142,11 @@ function openNode(node, includeNeighbors = false, skipUpdate = false) {
   if (!skipUpdate)
     onNodeClick(node);
 
+  updateHighlight();
+
   if (includeNeighbors) {
     runClustering();
     Graph.graphData(initData);
-    updateHighlight();
   }
 }
 
@@ -1250,3 +1255,47 @@ function resetNodes() {
 
   setTimeout(removeOrphans,500);
 }
+
+function fillStats() {
+  text = '<h3>Főbb adatok</h3>';
+  text += `<p>Blogok: ${nodeData.length}</p>`;
+  text += `<p>Kapcsolatok: ${linkData.length}</p>`;
+  text += `<p>Közös kapcsolatok: ${Array.from(linkData).filter(link => link.linkDirection == 'both').length}</p>`;
+  text += `<p>Csoportok: ${numClusters}</p>`;
+
+  if (hoverNode) {
+    text += '<h3>Kijelölés</h3>';
+    text += `<p>Kijelölt blog azonosítója: ${hoverNode.id}</p>`;
+    text += `<p>Kapcsolatok: ${hoverNode.links.size}</p>`;
+    text += `<p>Közös kapcsolatok: ${Array.from(hoverNode.links).filter(link => link.linkDirection == 'both').length}</p>`;
+    text += `<p>Bejövő élek: ${hoverNode.neighborsFrom.size}</p>`;
+    text += `<p>Kimenő élek: ${hoverNode.neighborsTo.size}</p>`;
+    text += `<p>Csoport: ${hoverNode.cluster}</p>`;
+    text += `<h4>Kapcsolatok</h4>`;
+    text += `<h5>Közös kapcsolatok</h5>`;
+    text += `<ol>`;
+    for (const link of Array.from(hoverNode.links).filter(link => link.linkDirection == 'both').sort((a,b) => Math.max(b.backData[1],b.data[1]) - Math.max(a.backData[1],a.data[1]))) {
+      text += `<li>${link.source.name} -> ${link.target.name}: ${link.data[0]} / ${link.data[1]}<br>`;
+      text += `${link.target.name} -> ${link.source.name}: ${link.backData[0]} / ${link.backData[1]}</li>`;
+    }
+    text += `</ol>`;
+
+    text += `<h5>Bejövő kapcsolatok</h5>`;
+    text += `<ol>`;
+    for (const link of Array.from(hoverNode.links).filter(link => link.linkDirection != 'both' && link.target == hoverNode).sort((a,b) => b.data[1] - a.data[1])) {
+      text += `<li>${link.source.name} -> ${link.target.name}: ${link.data[0]} / ${link.data[1]}</li>`;
+    }
+    text += `</ol>`;
+
+    text += `<h5>Kimenő kapcsolatok</h5>`;
+    text += `<ol>`;
+    for (const link of Array.from(hoverNode.links).filter(link => link.linkDirection != 'both' && link.source == hoverNode).sort((a,b) => b.data[1] - a.data[1])) {
+      text += `<li>${link.source.name} -> ${link.target.name}: ${link.data[0]} / ${link.data[1]}</li>`;
+    }
+    text += `</ol>`;
+  }
+
+  document.getElementById('stats-content').innerHTML = text;
+}
+
+fillStats();
