@@ -679,6 +679,11 @@ document.getElementById("zoom-out").onclick = function(e) {
   e.preventDefault();
 }
 
+document.getElementById("fire-bullet").onclick = function(e) {
+  shootLaser();
+  e.preventDefault();
+}
+
 document.getElementById("gay-mode").onclick = function(e) {
   gayMode(true);
   e.preventDefault();
@@ -1408,78 +1413,83 @@ audioLoader.load( 'img/587196__derplayer__explosion-06.wav', function( buffer ) 
   explosionBuffer = buffer;
 });
 
-window.addEventListener('keydown', (e) => {
-  if (e.key == ' ') {
-    const proj = {
-      sphere: new THREE.Mesh( geometry, material ),
-      count: 0,
-      tick: function() {
-        proj.count += 1;
 
-        let nodesToDelete = [];
+function shootLaser() {
+  const proj = {
+    sphere: new THREE.Mesh( geometry, material ),
+    count: 0,
+    tick: function() {
+      proj.count += 1;
 
-        for (let node of nodeData) {
-          if (node.__threeObj) {
-            if (node.__threeObj.position.distanceToSquared(proj.sphere.position) < 65*65) {
-              nodesToDelete.push(node);
-            }
+      let nodesToDelete = [];
+
+      for (let node of nodeData) {
+        if (node.__threeObj) {
+          if (node.__threeObj.position.distanceToSquared(proj.sphere.position) < 65*65) {
+            nodesToDelete.push(node);
           }
         }
+      }
 
-        if (nodesToDelete.length == 0) {
-          if (proj.count < 150) {
-            proj.sphere.translateZ(100);
-            requestAnimationFrame(proj.tick);
-          } else {
-            scene.remove(proj.sphere);
-            projectiles.splice(projectiles.indexOf(proj), 1);
-          }
+      if (nodesToDelete.length == 0) {
+        if (proj.count < 150) {
+          proj.sphere.translateZ(100);
+          requestAnimationFrame(proj.tick);
         } else {
           scene.remove(proj.sphere);
           projectiles.splice(projectiles.indexOf(proj), 1);
-
-          if (explosionBuffer) {
-            const sound = new THREE.PositionalAudio( audioListener );
-            sound.setBuffer( explosionBuffer );
-            sound.setRefDistance( 20 );
-            sound.play();
-
-            proj.sphere.add( sound );
-          }
-
-          for (let node of nodesToDelete) {
-            deleteNode(node, false, true);
-          }
-          Graph.graphData(initData);
-          runClustering();
-          setTimeout(removeOrphans,500);
         }
+      } else {
+        scene.remove(proj.sphere);
+        projectiles.splice(projectiles.indexOf(proj), 1);
+
+        if (explosionBuffer) {
+          const sound = new THREE.PositionalAudio( audioListener );
+          sound.setBuffer( explosionBuffer );
+          sound.setRefDistance( 20 );
+          sound.play();
+
+          proj.sphere.add( sound );
+        }
+
+        for (let node of nodesToDelete) {
+          deleteNode(node, false, true);
+        }
+        Graph.graphData(initData);
+        runClustering();
+        setTimeout(removeOrphans,500);
       }
     }
+  }
 
-    nextLeft = !nextLeft;
+  nextLeft = !nextLeft;
 
-    const startPos = new THREE.Vector3(nextLeft ? 50: -50, 0, 100);
-    startPos.applyMatrix4(Graph.camera().matrixWorld);
+  const startPos = new THREE.Vector3(nextLeft ? 50: -50, 0, 100);
+  startPos.applyMatrix4(Graph.camera().matrixWorld);
 
-    const endPos = new THREE.Vector3(0, 0, -10000);
-    endPos.applyMatrix4(Graph.camera().matrixWorld);
+  const endPos = new THREE.Vector3(0, 0, -10000);
+  endPos.applyMatrix4(Graph.camera().matrixWorld);
 
-    Graph.scene().add( proj.sphere );
+  Graph.scene().add( proj.sphere );
 
-    proj.sphere.position.lerp(startPos,1);
-    proj.sphere.lookAt(endPos);
-    proj.tick();
+  proj.sphere.position.lerp(startPos,1);
+  proj.sphere.lookAt(endPos);
+  proj.tick();
 
-    if (laserBuffer) {
-      const sound = new THREE.PositionalAudio( audioListener );
-      sound.setBuffer( laserBuffer );
-      sound.setRefDistance( 20 );
-      sound.play();
+  if (laserBuffer) {
+    const sound = new THREE.PositionalAudio( audioListener );
+    sound.setBuffer( laserBuffer );
+    sound.setRefDistance( 20 );
+    sound.play();
 
-      proj.sphere.add( sound );
-    }
+    proj.sphere.add( sound );
+  }
 
-    projectiles.push(proj);
+  projectiles.push(proj);
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key == ' ') {
+    shootLaser();
   }
 });
