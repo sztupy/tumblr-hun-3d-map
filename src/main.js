@@ -19,8 +19,8 @@ const settings = {
   selectedNodeTransparency: 1.0,
   linkTransparency: 0.5,
   selectedLinkTransparency: 0.8,
-  selectedLinkWidth: 8,
-  nodeSize: 1
+  selectedLinkWidth: 4,
+  nodeSize: 2
 }
 
 const isAR = typeof AFRAME !== 'undefined';
@@ -80,9 +80,9 @@ function setupSearch(mapping, settingName, formElement, formFunction) {
       let result = formFunction(e);
       let newSettings = updateSettings();
       if (result == 'redirect') {
-        window.location.replace("test.html?" + newSettings);
+        window.location.replace("viewer.html?" + newSettings);
       } else {
-        window.history.replaceState(null,'',"test.html?"+newSettings);
+        window.history.replaceState(null,'',"viewer.html?"+newSettings);
       }
     }
     if (typeof mapping === 'string') {
@@ -598,12 +598,13 @@ function addToSystem(focusBlogId, options = {}) {
   return changed;
 }
 
-function setCluster(node, cluster) {
+function setCluster(node, cluster, depth = 0) {
   if (node.cluster !== null) return;
+  if (depth > 1000) return;
 
   node.cluster = cluster;
-  node.neighborsFrom.forEach(n => setCluster(n, cluster));
-  node.neighborsTo.forEach(n => setCluster(n, cluster));
+  node.neighborsFrom.forEach(n => setCluster(n, cluster, depth + 1));
+  node.neighborsTo.forEach(n => setCluster(n, cluster, depth + 1));
 }
 
 let numClusters = 0;
@@ -1062,7 +1063,6 @@ function getNodeObject(node) {
 
     if (node.sprite) {
       result = node.sprite;
-      console.log(node);
 
       if (node.sprite.currentSize != settings.nodeSize) {
         if (!node.sprite.originalDimensions) {

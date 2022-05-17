@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+ <html>
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>Magyar Tumblr in 3D</title>
+    <link rel="stylesheet" href="css/index.css">
+  </head>
+  <body>
+    <h1>Magyar Tumblr 3D-ben</h1>
+
+    <h2>Példák</h2>
+
+    <h3>Alapértelmezett nézet</h3>
+    <a href="viewer.html"><img src="img/1-default.jpg" alt="Alapértelmezett nézet"></a>
+    <p>Az alapértelmezett nézet, 2019-2022 közötti adatokkal, csak a főbb blogok megjelenítve.
+      Nincs túl nagy gépigéne, ha ezt nem tudod megnyitni a többivel már nem is érdemes próbálkozni.</p>
+    <a href="viewer.html?fly">🚀</a>
+    <a href="viewer.html?orbit">🌍</a>
+    <a href="viewer.html?trackball">🔮</a>
+
+    <hr>
+
+    <h3>Csoportok színezése</h3>
+    <a href="viewer.html?clink-cnode"><img src="img/2-clustering.jpg" alt="Csoportok színezése"></a>
+    <p>2019-2022 közötti adatok, csak a főbb blogok, viszont színezve az alapján, hogy a legkedveltebb blogodat követve melyik blogpároshoz jutsz.</p>
+    <a href="viewer.html?fly-clink-cnode">🚀</a>
+    <a href="viewer.html?orbit-clink-cnode">🌍</a>
+    <a href="viewer.html?trackball-clink-cnode">🔮</a>
+
+    <hr>
+
+    <h3>Több blog megjelenítése</h3>
+    <a href="viewer.html?clink-cnode-most-labels"><img src="img/3-multiple-links.jpg" alt="Több blog megjelenítése"></a>
+    <p>2019-2022 közötti adatok, színezve. Közepes méretű blogok is előre be vannak töltve, és cimkézve, emiatt gyengébb számítógépen már problémás lehet a megjelenítése.</p>
+    <a href="viewer.html?fly-clink-cnode-most-labels">🚀</a>
+    <a href="viewer.html?orbit-clink-cnode-most-labels">🌍</a>
+    <a href="viewer.html?trackball-clink-cnode-most-labels">🔮</a>
+
+    <hr>
+
+    <h3>Feszítőfa alapú ábrázolás</h3>
+    <a href="viewer.html?most-2d-spantree-labels"><img src="img/4-spanning-tree.jpg" alt="Feszítőfa alapú ábrázolás"></a>
+    <p>2019-2022 közötti adatok, minimális feszítőfába rendezve, két dimenzióban. Figyelem, a betöltés egy kicsit lassab lehet, mint az előző példáknál</p>
+    <a href="viewer.html?fly-most-2d-spantree-labels">🚀</a>
+    <a href="viewer.html?orbit-most-2d-spantree-labels">🌍</a>
+    <a href="viewer.html?trackball-most-2d-spantree-labels">🔮</a>
+
+    <hr>
+
+    <h3>Több kapcsolat megjelenítése</h3>
+    <a href="viewer.html?clink-cnode-most-elem5-labels"><img src="img/5-more-connections.jpg" alt="Több kapcsolat megjelenítése"></a>
+    <p>2019-2022 közötti adatok, előre betöltve a legkedveltebb 5 blogod (a top 1 helyett). Gyengébb gépeken megölheti a böngészőt</p>
+    <a href="viewer.html?fly-clink-cnode-most-elem5-labels">🚀</a>
+    <a href="viewer.html?orbit-clink-cnode-most-elem5-labels">🌍</a>
+    <a href="viewer.html?trackball-clink-cnode-most-elem5-labels">🔮</a>
+
+    <hr>
+
+    <h3>Óriásgráf</h3>
+    <a href="viewer.html?clink-cnode-full-elem5-labels"><img src="img/6-large-graph.jpg" alt="Óriásgráf"></a>
+    <p>2019-2022 közötti adatok, előre betöltve az összes blog, a legtöbb kapcsolatával. Gyengébb gépeken nem biztos hogy érdemes betölteni</p>
+    <a href="viewer.html?fly-clink-cnode-full-elem5-labels">🚀</a>
+    <a href="viewer.html?orbit-clink-cnode-full-elem5-labels">🌍</a>
+    <a href="viewer.html?trackball-clink-cnode-full-elem5-labels">🔮</a>
+
+    <hr>
+
+    <h3>Ösidőktől</h3>
+    <a href="viewer.html?clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22"><img src="img/7-2010.jpg" alt="MINDEN"></a>
+    <p>Egész tumbli 2010-től, legkedveltebb blogod mutatásával. Erős videokártya ajánlott.</p>
+    <a href="viewer.html?fly-clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22">🚀</a>
+    <a href="viewer.html?orbit-clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22">🌍</a>
+    <a href="viewer.html?trackball-clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22">🔮</a>
+
+    <hr>
+
+    <h3>MINDEN</h3>
+    <a href="viewer.html?clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22"><img src="img/8-all.jpg" alt="MINDEN"></a>
+    <p>Egész tumbli, összes letöltött kapcsolat. Ha nincs kriptovaluta-bányászásra is érdemben alkalmas géped, akkor hagyd.</p>
+    <a href="viewer.html?fly-clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22">🚀</a>
+    <a href="viewer.html?orbit-clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22">🌍</a>
+    <a href="viewer.html?trackball-clink-cnode-full-labels-y10-y11-y12-y13-y14-y15-y16-y17-y18-y19-y20-y21-y22">🔮</a>
+
+
+    <h2>Megjegyzések</h2>
+
+    <h3>Interakciók</h3>
+
+    <p>A kapcsolatok minden esetben a két blog közötti interakciók számát veszik alapul, ahol interakció annak minősül, ha a másik posztját hozzáadott tartalommal reblogolod</p>
+
+    <h3>Minimális gépigény</h3>
+
+    <p>A gráf megjelenítése elég megterhelő tud lenni, így gyengébb gépeken és mobiltelefonokon még a legegyszerűbb példák sem biztos hogy bejönnek. Egy 2014-es iPad Air például egyáltalán nem viszi egyik példát sem. A 2016-os OnePlus 3T azonban már a legtöbb egyszerűbb példát használható sebességgel be tudja tölteni. Érdemes több böngészővel is megpróbálni a Firefox például kevesebb memóriát igényel, mint a Chrome vagy a Safari.</p>
+
+    <p>A komplexebb példákhoz már erősebb vas kell, a nagyobb példákkal egy modern M1 MacBook még épphogy megküzd, azonban a teljesen mindent tartalmazó 'MINDEN" gráfot már az se viszi, ahogy egy erősebb PC, GTX980-al is csak épphogy be tudja tölteni, mielőtt lefagyna.</p>
+
+    <h3>Irányítás</h3>
+
+    <p>Három irányítási mód van.<p>
+
+    <p>Repülő (🚀) módban a billentyűzet segítségével lehet a repülőt irányítani. a SHIFT gomb gyorsítja a repülőt. Mobiltelefonon nem annyira alkalmas ez az irányítási mód, de több ujj lenyomásával lehet előre, még több ujj segítségével pedig hátra repülni.</p>
+
+    <p>A bolygó (🌍) és golyó (🔮) üzemmódok hasonlóak, a kijelölt blog középpontban tartása mellett lehet velük körülnézni. A különbség a két mód között, hogy a bolygó üzemmúdban van "északi" és "déli" sark, amelyeknél nem engedi a továbbgörgetést, míg golyó üzemmódban ezek nem szerepelnek. Ideális irányítási mód mobiltelefonon, több ujjas vezérlés esetén</p>
+
+    <p>Az irányítási módokat bár lehet betöltés után is módosítani, érdemes az oldalt újratölteni, különösen ha golyó üzemmódra kívánunk váltani</p>
+
+    <p>Az irányítást ideiglenesen ki is lehet kapcsolni, ez akkor tud hasznos lenni ha a blogok mozgatása funkció engedélyezve van.</p>
+
+    <h3>Gráf</h3>
+
+    <p>Az Legkedveltebb blogok opció esetén a blogoknál mindig a megadott mennyiségű legkedvencebb blog lesz betöltve, azaz minden betöltött blognál a legkedveltebb (N) bloghoz lesz egy él húzva. Az N értéke a "maximális összekötések száma" szekcióban módosítható, tehát 1 esetén csak a legkedveltebb blogokat fogja mutatni, 2 esetén a top 2-t, stb. Ha betöltöttünk egy blogot, akkor ezt az értéket a (➕) és (✖️) gombokkal is lehet módosítani, az első gombnál a kijelölt blognál lesznek újabb kapcsolatok betöltve, a mádosik esetben a kijelölt blognál és összes szomszédjánál is.</p>
+
+    <p>A feszítőfás megjelenítésnél először egy minimális feszítőfa lett legyártva ami alapján ki lehet elemezni, hogy mely blogokhoz hogyan lehet a legkönnyebben "eljutni". Itt is lehet N értékét növelni, ilyenkor a második, harmadik, stb. legnagyobb feszítőfa is bekerül a kapcsolatok közé</p>
+
+    <p>Az előre betöltött kapcsolatoknál meg lehet adni, hogy a mely élek kerüljenek betöltésre. Minél szőkebbre van ez állítva annál nagyobbnak kell lennie két blog között az interakciók számának, hogy megjelenjen az él a rendszerben. A "legeslegnagyobbak" opció esetén például csak olyan élek töltődnek be, ahol a két blog között legalább 100 interakció zajlott a megadott évek alatt. Az "összes" opció esetén minden egyes kapcsolat megjelenik, az is ahol csak egyetlen egy interakció született a két blog között</p>
+
+    <p>A gráfot 2D vagy 3D-ben lehet ábrázolni, előbbi esetben az összes blog egy síkba kerül a többivel. Ha olyan gráfot töltünk be ahol a maximális összekötések száma 1, ott lehet faszerű megjelenítést is választani. Ez a funkció sűrűbb gráfoknál azonban nem működik.</p>
+
+    <h3>Adatsor</h3>
+
+    <p>Az adatsor alatt meg lehet jelölni, hogy mely évek adatait kívánjuk látni. Alapértelmezettben 2019-2022 közötti adatok vannak csak betöltve</p>
+
+    <h3>Megjelenés</h3>
+
+    <p>A megjelenés alatt a gráf megjelenítését lehet finomhangolni, például hogy mekkora legyen a blogok mérete, vagy átlátszósága. A cimkék alatt megmondhatjuk, hogy mely blogokat szeretnénk cimkézve, névvel látni (a többi blog csak golyóként fog megjelenni). A színek alatt be lehet kapcsolni, hogy akarjuk-e a blogokat csoportjaik szerint színezni, vagy sem</p>
+
+    <h3>Egyebek</h3>
+
+    <p>Kapcsolatok megtartása: ha be van kapcsolva akkor amikor az adatsort vagy a gráfbeállításokat módosítjuk akkor nem törlődnek a már szereplő élek a rendszerből</p>
+    <p>Blogok kitakarítása: magányos, illetve a gráf szélén tengődő blogok törlése az ábráról</p>
+    <p>Blogmozgatás engedélyezése: ha be van kapcsolva lehet a kijelölt blogokat az egérrel arrébbmozgatni. Bekapcsolása újratöltést igényel.</p>
+    <p>Blokkolt blogok újraengedélyezése: ha blokklistára tettünk egy blogot mikor kitörültük, akkor itt lehet a blokklistát kiüríteni, hogy ezek a blogok újra megjelenhessenek.</p>
+
+    <h3>Kijelölt blog</h3>
+    <p>Ha kijelölünk egy blogot akkor láthatjuk a kapcsolatait a szomszédai felé. A sárga élek jelentik a kimenő, a zöld élek a bejövő kapcsolatokat, a piros él pedig azt jelenti, hogy a kapcsolat kölcsönös, azaz mindkét félnél benne vagytok egymás top N blogjai között.</p>
+    <p>A kijelölt blogra rá lehet közelíteni (🔎), be lehet tölteni több kapcsolatát (➕,✖️ - utóbbi esetben a szomszédait is), lehet utat keresni tőle más blog felé (🛣️), illetve törölni a gráfról (🗑️ ,🚫) Utóbbi esetben blokklistára kerül és nem töltődik be újra, amikor módosítjuk a gráfadatokat, amíg nem töröljük a blokklistát, vagy töltjük be újra az oldalt</p>
+
+    <h3>🌈 🪩 🔥 ✨</h3>
+    <p>🌈: buzítóapparát</p>
+    <p>🪩: diszkó üzemmód</p>
+    <p>🔥: gráf újramelegítése</p>
+    <p>✨: gráf újratervezése</p>
+    <p>🔫: pew, pew, pew</p>
+    <p>🔎: kereső</p>
+    <p>📈: statisztika megjelenítése</p>
+    <p>🌎: egész gráf megjelenítése</p>
+
+  </body>
+</html>
