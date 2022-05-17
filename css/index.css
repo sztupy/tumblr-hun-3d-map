@@ -33,3 +33,12 @@ a {
 p {
   text-align: left;
 }
+
+p a {
+  font-size: 1em !important;
+  color: lightgray;
+}
+
+p a:visited {
+  color: gray;
+}
