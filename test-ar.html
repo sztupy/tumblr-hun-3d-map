@@ -1,143 +1,21 @@
-<!DOCTYPE html>
- <html>
+  <html>
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <title>Magyar Tumblr in 3D</title>
-    <link rel="stylesheet" href="css/main.css">
-    <script src="//unpkg.com/aframe"></script>
-    <script src="//unpkg.com/@ar-js-org/ar.js"></script>
-  </head>
-  <body>
-    <div id="controls">
-      <a id="open-config" href="#" title="Beállítások">⚙️</a>
-      <a id="search-open" href="#" title="Kereső">🔎</a>
-      <a id="open-stats" href="#" title="Statisztika">📈</a>
-      <a id="zoom-out" href="#" title="Minden megjelenítése">🌎</a>
-      <a id="fire-bullet" href="#" title="Blogtörlő-golyó indítása">🔫</a>
-    </div>
-    <div id="search">
-      <div id="search-alphabet"></div>
-      <div id="search-values"><span id="alphabet-top"></span></div>
-    </div>
+    <link rel="stylesheet" href="css/main-ar.css">
+    <script src="src/aframe.js"></script>
+    <script src="src/ar-js-org-ar.js"></script>
 
-    <div id="stats">
-      <div id="stats-exit" title="Kilépés">[X]</div>
-      <div id="stats-content"></div>
-    </div>
-
-    <div id="config">
-      <div id="config-exit" title="Kilépés">[X]</div>
-      <div id="config-content">
-        <form autocomplete="off" method="get" action="" onsubmit="event.preventDefault(); return false;">
-        <input autocomplete="false" name="hidden" type="text" style="display:none;">
-        <a id="gay-mode" href="#" title="Buzítóapparát!">🌈</a>
-        <a id="disco-mode" href="#" title="Diszkó!">🪩</a>
-        <a id="reheat-graph" href="#" title="Gráfszimuláció újramelegítése">🔥</a>
-        <a id="reset-graph" href="#" title="Gráfszimuláció újraindítása">✨</a>
-        <h3>Irányítás</h3>
-          <input type="radio" id="s-control_type-fly" name="control_type" value="fly"><label for="s-control_type-fly" title="Űrhajószimulátor">🚀</label>
-          <input type="radio" id="s-control_type-orbit" name="control_type" value="orbit"><label for="s-control_type-orbit" title="Földgömb">🌍</label>
-          <input type="radio" id="s-control_type-tracball" name="control_type" value="trackball"><label for="s-control_type-trackball" title="Golyó">🔮</label>
-          <input type="checkbox" id="s-allow-controls" name="allow_controls" value="true"><label for="s-allow-controls" title="Kameramozgatás engedélyezése">✅</label>
-        <h3>Gráf</h3>
-        <h4>Összekötettések rendezése</h4>
-          <input type="radio" id="s-graph_type-topblog" name="graph_type" value="topblog"><label for="s-graph_type-topblog" title="Legkedveltebb blog alapján">Legkedveltebb blogok</label><br>
-          <input type="radio" id="s-graph_type-spantree" name="graph_type" value="spantree"><label for="s-graph_type-spantree" title="Minimális feszítőfa alapján">Minimális feszítőfa</label><br>
-        <h4>Maximális összekötések száma</h4>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="1"><label for="s-top_elems-1" title="1">1</label>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="2"><label for="s-top_elems-2" title="2">2</label>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="3"><label for="s-top_elems-3" title="3">3</label>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="5"><label for="s-top_elems-5" title="5">5</label>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="10"><label for="s-top_elems-10" title="10">10</label>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="20"><label for="s-top_elems-20" title="20">20</label>
-          <input type="radio" id="s-top_elems-1" name="top_elems" value="50"><label for="s-top_elems-50" title="50">50</label>
-        <h4>Előre betöltött kapcsolatok</h4>
-          <input type="radio" id="s-values_to_limit-onlytop" name="values_to_limit" value="100"><label for="s-values_to_limit-onlytop" title="Legeslegnagyobb kapcsolatok betöltése (>500 interakció)">Csak a legeslegnagyobbak</label><br>
-          <input type="radio" id="s-values_to_limit-limited" name="values_to_limit" value="50"><label for="s-values_to_limit-limited" title="Legnagyobb kapcsolatok betöltése (>50 interakció)">Még nagyobbak</label><br>
-          <input type="radio" id="s-values_to_limit-some" name="values_to_limit" value="25"><label for="s-values_to_limit-some" title="Nagyobb kapcsolatok betöltése (>25 interakció)">Nagyobbak</label><br>
-          <input type="radio" id="s-values_to_limit-most" name="values_to_limit" value="10"><label for="s-values_to_limit-most" title="Majdnem összes kapcsolat betöltése (>10 interakció)">Majdnem összes</label><br>
-          <input type="radio" id="s-values_to_limit-full" name="values_to_limit" value="0"><label for="s-values_to_limit-full" title="Összes kapcsolat betöltése">Összes</label>
-        <h4>Gráf kiterjedése</h4>
-          <input type="radio" id="s-dimensions-2d" name="dimensions" value="2"><label for="s-dimensions-2d" title="2D gráf">2D Gráf</label><br>
-          <input type="radio" id="s-dimensions-3d" name="dimensions" value="3"><label for="s-dimensions-3d" title="3D gráf">3D Gráf</label>
-        <h4>Faszerű ábrázolás</h4>
-          <input type="radio" id="s-dag-nodag" name="dag" value="false"><label for="s-dag-nodag" title="Kikapcsolva">Nem</label><br>
-          <input type="radio" id="s-dag-dag" name="dag" value="td"><label for="s-dag-dag" title="Fentről-lefele">Fentről lefele</label><br>
-          <input type="radio" id="s-dag-rad" name="dag" value="radialin"><label for="s-dag-rad" title="Belülről-kifele">Belülről kifele</label><br>
-          <input type="radio" id="s-dag-dar" name="dag" value="radialout"><label for="s-dag-dar" title="Kívülről-befele">Kívülről befele</label><br>
-        <h3>Adatsor</h3>
-          <input type="checkbox" id="s-year-2010" name="y10" value="2010"><label for="s-year-2010">2010</label>
-          <input type="checkbox" id="s-year-2011" name="y11" value="2011"><label for="s-year-2011">2011</label>
-          <input type="checkbox" id="s-year-2012" name="y12" value="2012"><label for="s-year-2012">2012</label><br>
-          <input type="checkbox" id="s-year-2013" name="y13" value="2013"><label for="s-year-2013">2013</label>
-          <input type="checkbox" id="s-year-2014" name="y14" value="2014"><label for="s-year-2014">2014</label>
-          <input type="checkbox" id="s-year-2015" name="y15" value="2015"><label for="s-year-2015">2015</label><br>
-          <input type="checkbox" id="s-year-2016" name="y16" value="2016"><label for="s-year-2016">2016</label>
-          <input type="checkbox" id="s-year-2017" name="y17" value="2017"><label for="s-year-2017">2017</label>
-          <input type="checkbox" id="s-year-2018" name="y18" value="2018"><label for="s-year-2018">2018</label><br>
-          <input type="checkbox" id="s-year-2019" name="y19" value="2019"><label for="s-year-2019">2019</label>
-          <input type="checkbox" id="s-year-2020" name="y20" value="2020"><label for="s-year-2020">2020</label>
-          <input type="checkbox" id="s-year-2021" name="y21" value="2021"><label for="s-year-2021">2021</label><br>
-          <input type="checkbox" id="s-year-2022" name="y22" value="current"><label for="s-year-2022">2022</label>
-        <h3>Megjelenés</h3>
-          <input type="radio" id="s-display_type-spheres" name="display_type" value="spheres"><label for="s-display_type-spheres" title="Bogyók">Golyók</label><br>
-          <input type="radio" id="s-display_type-top50" name="display_type" value="top50"><label for="s-display_type-top50" title="Top 50 cimkézve">Top blogok cimkézve</label><br>
-          <input type="radio" id="s-display_type-labels" name="display_type" value="labels"><label for="s-display_type-labels" title="Cimkék">Összes blog cimkézve</label><br>
-          <br>
-          <label for="s-node-transparency">Blogok átláthatósága</label><br>
-          <input type="range" id="s-node-transparency" name="node_transparency" value="1" min="0" max="1" step="0.01"><br>
-          <label for="s-snode-transparency">Kiválasztott Blog átláthatósága</label><br>
-          <input type="range" id="s-snode-transparency" name="selected_node_transparency" value="1" min="0" max="1" step="0.01"><br>
-          <label for="s-link-transparency">Élek átláthatósága</label><br>
-          <input type="range" id="s-link-transparency" name="link_transparency" value="1" min="0" max="1" step="0.01"><br>
-          <label for="s-slink-transparency">Kiválasztott élek átláthatósága</label><br>
-          <input type="range" id="s-slink-transparency" name="selected_link_transparency" value="1" min="0" max="1" step="0.01"><br>
-          <label for="s-slink-size">Kiválasztott élek vastagsága</label><br>
-          <input type="range" id="s-slink-size" name="selected_link_size" value="1" min="0" max="40" step="0.1"><br>
-          <label for="s-node-size">Blogok mérete</label><br>
-          <input type="range" id="s-node-size" name="node_size" value="1" min="0" max="5" step="0.1"><br>
-
-        <h3>Színek</h3>
-          <input type="checkbox" id="s-colornodes" name="colornodes" value="true"><label for="s-colornodes" title="Blogok kiszinezése csoportszám alapján">Színblog</label><br>
-          <input type="checkbox" id="s-colorlinks" name="colorlinks" value="true"><label for="s-colorlinks" title="Élek kiszinezése csoportszám alapján">Színvonal</label><br>
-        <h3>Egyebek</h3>
-          <input type="checkbox" id="s-keep_on_change" name="keep_on_change" value="true"><label for="s-keep_on_change" title="Meglévő kapcsolatok megtartása a gráf adatsorának változása esetén">Kapcsolatok megtartása</label><br>
-          <input type="checkbox" id="s-delete_orphans" name="delete_orphans" value="true"><label for="s-delete_orphans" title="Magányossá váló blogok törlése a gráf adatsorának változása esetén automatikusan">Magányos blogok auto-törlése</label><br>
-          <input type="checkbox" id="s-auto_zoom" name="auto_zoom" value="true"><label for="s-auto_zoom" title="Automatikus nagyítás blog kijelölése esetén">Automatikus nagyítás</label><br>
-          <input type="checkbox" id="s-allow-node-move" name="allow_node_move" value="true"><label for="s-auto_zoom" title="Blogok mozgatásának engedélyezése - újratöltést igényel">Blogmozgatás engedélyezése*</label><br>
-          <br>
-          <button id="b-remove-orphans">Magányos blogok kitakarítása</button><br>
-          <button id="b-remove-leaf-nodes">Zsákutca blogok kitakarítása</button><br>
-          <button id="b-remove-one-link">Végblogok kitakarítása</button><br>
-          <button id="b-empty-blacklist">Blokkolt blogok újraengedélyezése</button>
-        </form>
-      </div>
-    </div>
-
-    <div id="node-info">
-      <div id="node-info-exit" title="Kilépés">[X]</div>
-      <div id="node-info-text">
-      </div>
-      <div id="node-controls">
-        <a id="node-info-zoom" href="#" title="Blog kinagyítása">🔎</a>
-        <a id="node-info-add" href="#" title="Kapcsolatok további kibontása">➕</a>
-        <a id="node-info-add-all" href="#" title="Kapcsolatok és szomszédok további kibontása">✖️</a>
-        <a id="node-info-path" href="#" title="Útkeresés másik blog felé">🛣️</a>
-        <a id="node-info-delete" href="#" title="Blog eltávolítása a gráfról">🗑️</a>
-        <a id="node-info-ban" href="#" title="Blog törlése a rendszerből">🚫</a>
-      </div>
-    </div>
-
-    <div id="3d-graph"></div>
-    <div id="loading"><img src="img/loading-cat.gif"></div>
-
-    <script src="src/three.js"></script>
     <script src="src/three-spritetext.js"></script>
     <script src="src/3d-force-graph.js"></script>
     <script src="src/ar-additions.js"></script>
+  </head>
+  <body>
+    <div id="3d-graph"></div>
+
     <script src="src/data.js"></script>
     <script src="src/main.js"></script>
   </body>

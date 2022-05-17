@@ -14223,7 +14223,7 @@ function InsertStackElement(node, body) {
   }
 
   window.kapsuleFunction = index$2;
-  window.ThreeForceGraph = ForceGraph;
+  window.ThreeForceGraph = threeForcegraph;
   return _3dForceGraph;
 
 }));

@@ -251,7 +251,10 @@ for (let year = 10; year <= 22; year++) {
 if (settings.valuesToLoad.length == 0) {
   settings.valuesToLoad = ["2019","2020","2021","current"];
   for (let year=19; year<=22; year++) {
-    document.getElementsByName(`y${year}`)[0].checked = true;
+    let element = document.getElementsByName(`y${year}`);
+    if (element && element[0]) {
+      element[0].checked = true;
+    }
   }
 }
 
@@ -679,167 +682,169 @@ window.onload = function() {
 // const ForceCenter = Graph.d3Force('center').strength(0.01);
 
 // handle the controls on the right
-const controls = document.getElementById("controls");
+if (!isAR) {
+  const controls = document.getElementById("controls");
 
-document.getElementById("zoom-out").onclick = function(e) {
-  autoFocus = 'all';
-  e.preventDefault();
-}
-
-document.getElementById("fire-bullet").onclick = function(e) {
-  shootLaser();
-  e.preventDefault();
-}
-
-document.getElementById("gay-mode").onclick = function(e) {
-  gayMode(true);
-  e.preventDefault();
-}
-
-let discoMode = null;
-document.getElementById("disco-mode").onclick = function(e) {
-  if (!discoMode) {
-    const discoMode = new THREE.UnrealBloomPass();
-    discoMode.strength = 0.5;
-    discoMode.radius = 2;
-    discoMode.threshold = 0.1;
-    Graph.postProcessingComposer().addPass(discoMode);
-  } else {
-    discoMode.strength = discoMode.strength + 0.25;
+  document.getElementById("zoom-out").onclick = function(e) {
+    autoFocus = 'all';
+    e.preventDefault();
   }
-  e.preventDefault();
-}
 
-document.getElementById("reset-graph").onclick = function(e) {
-  nodeData.forEach(node => {
-    node.x=Math.random()*100;
-    node.y=Math.random()*100;
-    node.z=Math.random()*100;
-  });
-  Graph.graphData(initData);
-  e.preventDefault();
-}
+  document.getElementById("fire-bullet").onclick = function(e) {
+    shootLaser();
+    e.preventDefault();
+  }
 
-document.getElementById("reheat-graph").onclick = function(e) {
-  Graph.d3ReheatSimulation();
-  e.preventDefault();
-}
+  document.getElementById("gay-mode").onclick = function(e) {
+    gayMode(true);
+    e.preventDefault();
+  }
 
-document.getElementById("open-stats").onclick = function(e) {
-  document.getElementById("stats").style.display = "flex";
-  controls.style.display = "none";
-  e.preventDefault();
-}
-
-document.getElementById("stats-exit").onclick = function(e) {
-  document.getElementById("stats").style.display = "none";
-  controls.style.display = "block";
-  e.preventDefault();
-}
-
-document.getElementById("open-config").onclick = function(e) {
-  document.getElementById("config").style.display = "flex";
-  controls.style.display = "none";
-  e.preventDefault();
-}
-
-document.getElementById("config-exit").onclick = function(e) {
-  document.getElementById("config").style.display = "none";
-  controls.style.display = "block";
-  e.preventDefault();
-}
-
-const searchBoxOpener = document.getElementById("search-open");
-searchBoxOpener.onclick = function(e) {
-  searchBox.style.display = "flex";
-  controls.style.display = "none";
-  e.preventDefault();
-}
-
-const searchBox = document.getElementById("search");
-
-for (let i = 0; i < 37; i++) {
-  let child = document.createElement("a");
-  let char = i < 36 ? i.toString(36) : 'top';
-  child.href = "#";
-  child.innerHTML = char + " ";
-  child.style.display = "inline";
-  child.onclick = function(e) {
-    let element = document.getElementById(`alphabet-${char}`);
-    if (element) {
-      console.log(element);
-      element.scrollIntoView(true);
+  let discoMode = null;
+  document.getElementById("disco-mode").onclick = function(e) {
+    if (!discoMode) {
+      const discoMode = new THREE.UnrealBloomPass();
+      discoMode.strength = 0.5;
+      discoMode.radius = 2;
+      discoMode.threshold = 0.1;
+      Graph.postProcessingComposer().addPass(discoMode);
+    } else {
+      discoMode.strength = discoMode.strength + 0.25;
     }
     e.preventDefault();
   }
+
+  document.getElementById("reset-graph").onclick = function(e) {
+    nodeData.forEach(node => {
+      node.x=Math.random()*100;
+      node.y=Math.random()*100;
+      node.z=Math.random()*100;
+    });
+    Graph.graphData(initData);
+    e.preventDefault();
+  }
+
+  document.getElementById("reheat-graph").onclick = function(e) {
+    Graph.d3ReheatSimulation();
+    e.preventDefault();
+  }
+
+  document.getElementById("open-stats").onclick = function(e) {
+    document.getElementById("stats").style.display = "flex";
+    controls.style.display = "none";
+    e.preventDefault();
+  }
+
+  document.getElementById("stats-exit").onclick = function(e) {
+    document.getElementById("stats").style.display = "none";
+    controls.style.display = "block";
+    e.preventDefault();
+  }
+
+  document.getElementById("open-config").onclick = function(e) {
+    document.getElementById("config").style.display = "flex";
+    controls.style.display = "none";
+    e.preventDefault();
+  }
+
+  document.getElementById("config-exit").onclick = function(e) {
+    document.getElementById("config").style.display = "none";
+    controls.style.display = "block";
+    e.preventDefault();
+  }
+
+  const searchBoxOpener = document.getElementById("search-open");
+  searchBoxOpener.onclick = function(e) {
+    searchBox.style.display = "flex";
+    controls.style.display = "none";
+    e.preventDefault();
+  }
+
+  const searchBox = document.getElementById("search");
+
+  for (let i = 0; i < 37; i++) {
+    let child = document.createElement("a");
+    let char = i < 36 ? i.toString(36) : 'top';
+    child.href = "#";
+    child.innerHTML = char + " ";
+    child.style.display = "inline";
+    child.onclick = function(e) {
+      let element = document.getElementById(`alphabet-${char}`);
+      if (element) {
+        console.log(element);
+        element.scrollIntoView(true);
+      }
+      e.preventDefault();
+    }
+    document.getElementById("search-alphabet").appendChild(child);
+    if (i%10 == 9) {
+      document.getElementById("search-alphabet").appendChild(document.createElement("br"));
+    }
+  }
+
+  let child = document.createElement("a");
+  child.href = "#";
+  child.innerHTML = "[X]";
+  child.style.display = "inline";
+  child.onclick = function(e) {
+    searchBox.style.display = "none";
+    controls.style.display = "block";
+    e.preventDefault();
+  }
   document.getElementById("search-alphabet").appendChild(child);
-  if (i%10 == 9) {
-    document.getElementById("search-alphabet").appendChild(document.createElement("br"));
-  }
-}
 
-let child = document.createElement("a");
-child.href = "#";
-child.innerHTML = "[X]";
-child.style.display = "inline";
-child.onclick = function(e) {
-  searchBox.style.display = "none";
-  controls.style.display = "block";
-  e.preventDefault();
-}
-document.getElementById("search-alphabet").appendChild(child);
+  function fillBlogSearchList() {
+    const searchValues = document.getElementById("search-values");
+    searchValues.innerHTML='';
+    // top blogs
+    let topBlogs = availableBlogs.map(blog => {
+      let node = nodeData.find(node => node.id == blog.id);
+      return { name: blog.name, node: node, value: node ? node.totalVal : 0, id: blog.id };
+    }).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
 
-function fillBlogSearchList() {
-  const searchValues = document.getElementById("search-values");
-  searchValues.innerHTML='';
-  // top blogs
-  let topBlogs = availableBlogs.map(blog => {
-    let node = nodeData.find(node => node.id == blog.id);
-    return { name: blog.name, node: node, value: node ? node.totalVal : 0, id: blog.id };
-  }).sort((a,b) => b.value - a.value).slice(0,50).sort((a,b) => a.name > b.name ? 1 : -1);
-
-  for (let blog of topBlogs) {
-    if (!blog.node) continue;
-    blog.node.topBlog = true;
-    const child = document.createElement("a");
-    child.href="#";
-    child.textContent = blog.name;
-    child.id=`top-blog-${blog.id}`;
-    child.classList.add("top-blog");
-    child.onclick = (event) => {
-      onNodeClick(blog.id);
-      searchBox.style.display = "none";
-      controls.style.display = "block";
-      event.preventDefault();
-    }
-    searchValues.appendChild(child);
-  }
-
-  let oldChar = null;
-  for (let blog of availableBlogs) {
-    const child = document.createElement("a");
-    child.href="#";
-    child.id=`blog-${blog.id}`;
-    child.textContent = blog.name;
-    if (nodeData.find(node => node.id == blog.id)) {
+    for (let blog of topBlogs) {
+      if (!blog.node) continue;
+      blog.node.topBlog = true;
+      const child = document.createElement("a");
+      child.href="#";
+      child.textContent = blog.name;
+      child.id=`top-blog-${blog.id}`;
       child.classList.add("top-blog");
+      child.onclick = (event) => {
+        onNodeClick(blog.id);
+        searchBox.style.display = "none";
+        controls.style.display = "block";
+        event.preventDefault();
+      }
+      searchValues.appendChild(child);
     }
-    child.onclick = (event) => {
-      onNodeClick(blog.id);
 
-      searchBox.style.display = "none";
-      controls.style.display = "block";
-      event.preventDefault();
+    let oldChar = null;
+    for (let blog of availableBlogs) {
+      const child = document.createElement("a");
+      child.href="#";
+      child.id=`blog-${blog.id}`;
+      child.textContent = blog.name;
+      if (nodeData.find(node => node.id == blog.id)) {
+        child.classList.add("top-blog");
+      }
+      child.onclick = (event) => {
+        onNodeClick(blog.id);
+
+        searchBox.style.display = "none";
+        controls.style.display = "block";
+        event.preventDefault();
+      }
+      if (oldChar != blog.name.charAt(0)) {
+        oldChar = blog.name.charAt(0);
+        child.id = `alphabet-${oldChar}`;
+      }
+      searchValues.appendChild(child);
     }
-    if (oldChar != blog.name.charAt(0)) {
-      oldChar = blog.name.charAt(0);
-      child.id = `alphabet-${oldChar}`;
-    }
-    searchValues.appendChild(child);
   }
-}
 
-fillBlogSearchList();
+  fillBlogSearchList();
+}
 
 // zoom to a specific node
 function zoomTo(node, speed = 1000) {
@@ -881,7 +886,7 @@ window.addEventListener('wheel', function (event) { if (Math.abs(event.deltaY)>1
 
 // Firefox mobile doesn't load in full screen, need the following to force it to load properly
 Graph.onEngineTick(function() {
-  if (/Mozilla.+Android.+Mobile.+Firefox\//.test(navigator.userAgent)) {
+  if (!isAR && /Mozilla.+Android.+Mobile.+Firefox\//.test(navigator.userAgent)) {
     Graph.width(document.body.clientWidth);
     Graph.height(document.body.clientHeight);
   }
@@ -895,8 +900,10 @@ setTimeout(function updateLabels() {
   if (labelSkipped > 0) {
     updateHighlight();
   } else {
-    setTimeout(function() { document.getElementById("loading").style.opacity = "0";},1);
-    setTimeout(function() { document.getElementById("loading").style.display = "none";},1100);
+    if (!isAR) {
+      setTimeout(function() { document.getElementById("loading").style.opacity = "0";},1);
+      setTimeout(function() { document.getElementById("loading").style.display = "none";},1100);
+    }
   }
   labelDone = 0;
   labelSkipped = 0;
@@ -905,8 +912,10 @@ setTimeout(function updateLabels() {
 
 // handle resize events to make sure the screen keeps it's normal size
 window.addEventListener('resize', function() {
-  Graph.width(document.body.clientWidth);
-  Graph.height(document.body.clientHeight);
+  if (!isAR) {
+    Graph.width(document.body.clientWidth);
+    Graph.height(document.body.clientHeight);
+  }
 });
 
 let searchResults = [];
@@ -1041,24 +1050,27 @@ function getSprite(node) {
 function getNodeObject(node) {
   let result = false;
 
-  if (!node.sprite && (settings.displayType=='labels' || hightlightNodes.has(node) || (settings.displayType=='top50' && node.topBlog))) {
-    if (labelDone<settings.labelLoadPerTick) {
-      node.sprite = getSprite(node, "white");
-      labelDone++;
-    } else {
-      labelSkipped++;
-    }
-  }
-
-  if (node.sprite) {
-    result = node.sprite;
-
-    if (node.sprite.currentSize != settings.nodeSize) {
-      if (!node.sprite.originalDimensions) {
-        node.sprite.originalDimensions = node.sprite.scale.clone();
+  if (!isAR || getGlobalCamera()) {
+    if (!node.sprite && (settings.displayType=='labels' || hightlightNodes.has(node) || (settings.displayType=='top50' && node.topBlog))) {
+      if (labelDone<settings.labelLoadPerTick) {
+        node.sprite = getSprite(node, "white");
+        labelDone++;
+      } else {
+        labelSkipped++;
       }
-      node.sprite.scale.set(settings.nodeSize * node.sprite.originalDimensions.x, settings.nodeSize * node.sprite.originalDimensions.y, 0);
-      node.sprite.curentSize = settings.nodeSize;
+    }
+
+    if (node.sprite) {
+      result = node.sprite;
+      console.log(node);
+
+      if (node.sprite.currentSize != settings.nodeSize) {
+        if (!node.sprite.originalDimensions) {
+          node.sprite.originalDimensions = node.sprite.scale.clone();
+        }
+        node.sprite.scale.set(settings.nodeSize * node.sprite.originalDimensions.x, settings.nodeSize * node.sprite.originalDimensions.y, 0);
+        node.sprite.curentSize = settings.nodeSize;
+      }
     }
   }
 
@@ -1182,9 +1194,13 @@ function getNodeLabel(node) {
 
 let startPoint = null;
 
-document.getElementById("node-info-exit").onclick = (e) => { fillNodeDetails(null); onNodeClick(null); e.preventDefault(); }
+if (!isAR) {
+  document.getElementById("node-info-exit").onclick = (e) => { fillNodeDetails(null); onNodeClick(null); e.preventDefault(); }
+}
 // node modification tools
 function fillNodeDetails(node) {
+  if (isAR) return;
+
   let details = '';
   if (node) {
     details += `Név: ${node.name} <br>`;
@@ -1292,10 +1308,12 @@ function deleteNode(node, blacklist = false, skipUpdate = false) {
   }
 }
 
-document.getElementById('b-remove-orphans').onclick = (e) => { removeOrphans(true); e.preventDefault(); };
-document.getElementById('b-remove-leaf-nodes').onclick = (e) => { removeOrphans(true, 1); e.preventDefault(); };
-document.getElementById('b-remove-one-link').onclick = (e) => { removeOrphans(true, 1, false); e.preventDefault(); };
-document.getElementById('b-empty-blacklist').onclick = (e) => { nodeBlackList.clear(); fillBlogSearchList(); e.preventDefault(); };
+if (!isAR) {
+  document.getElementById('b-remove-orphans').onclick = (e) => { removeOrphans(true); e.preventDefault(); };
+  document.getElementById('b-remove-leaf-nodes').onclick = (e) => { removeOrphans(true, 1); e.preventDefault(); };
+  document.getElementById('b-remove-one-link').onclick = (e) => { removeOrphans(true, 1, false); e.preventDefault(); };
+  document.getElementById('b-empty-blacklist').onclick = (e) => { nodeBlackList.clear(); fillBlogSearchList(); e.preventDefault(); };
+}
 
 
 function removeOrphans(force = false, linkLimit = 0, checkDualLinks = true) {
@@ -1350,6 +1368,7 @@ function resetNodes() {
 }
 
 function fillStats() {
+  if (isAR) return;
   text = '<h3>Főbb adatok</h3>';
   text += `<p>Blogok: ${nodeData.length}</p>`;
   text += `<p>Kapcsolatok: ${linkData.length}</p>`;
@@ -1420,6 +1439,20 @@ if (!isAR) {
   globalCamera.add( audioListener );
 }
 
+function getGlobalCamera() {
+  if (globalCamera) {
+    return globalCamera;
+  }
+  if (!globalCamera && isAR) {
+    const cameraEl = document.querySelector('a-entity[camera], a-camera');
+    globalCamera = cameraEl.object3D.children.filter(function (child) { return child.type === 'PerspectiveCamera'; })[0];
+    if (globalCamera) {
+      globalCamera.add( audioListener );
+    }
+  }
+  return globalCamera;
+}
+
 const audioLoader = new THREE.AudioLoader();
 audioLoader.load( 'img/466867__mikee63__blaster-shot-single-5.wav', function( buffer ) {
   laserBuffer = buffer;
@@ -1430,15 +1463,16 @@ audioLoader.load( 'img/587196__derplayer__explosion-06.wav', function( buffer ) 
 
 
 function shootLaser() {
-  if (!globalCamera && isAR) {
-    const cameraEl = document.querySelector('a-entity[camera], a-camera');
-    globalCamera = cameraEl.object3D.children.filter(function (child) { return child.type === 'PerspectiveCamera'; })[0];
-    if (globalCamera) {
-      globalCamera.add( audioListener );
-    }
+  if (!getGlobalCamera()) return;
+
+  let scene = null;
+  if (isAR) {
+    scene = document.getElementsByTagName('a-scene')[0].object3D;
+  } else {
+    scene = Graph.scene();
   }
 
-  if (!globalCamera) return;
+  if (!scene) return;
 
   const proj = {
     sphere: new THREE.Mesh( geometry, material ),
@@ -1495,7 +1529,7 @@ function shootLaser() {
   const endPos = new THREE.Vector3(0, 0, -10000);
   endPos.applyMatrix4(globalCamera.matrixWorld);
 
-  Graph.scene().add( proj.sphere );
+  scene.add( proj.sphere );
 
   proj.sphere.position.lerp(startPos,1);
   proj.sphere.lookAt(endPos);

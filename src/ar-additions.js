@@ -395,11 +395,11 @@
       Object.entries(markerAttrs).forEach(([attr, val]) => arMarker.setAttribute(attr, val));
       scene.appendChild(arMarker);
 
-      // Setup raycaster cursor
-      let mouseCursor;
-      scene.appendChild(mouseCursor = document.createElement('a-entity'));
-      mouseCursor.setAttribute('cursor' /*, 'rayOrigin: mouse'*/); // mouse raycaster has accuracy issues in ar.js: https://github.com/AR-js-org/AR.js/issues/40
-      mouseCursor.setAttribute('raycaster', 'objects: [forcegraph]');
+      // // Setup raycaster cursor
+      // let mouseCursor;
+      // scene.appendChild(mouseCursor = document.createElement('a-entity'));
+      // mouseCursor.setAttribute('cursor' /*, 'rayOrigin: mouse'*/); // mouse raycaster has accuracy issues in ar.js: https://github.com/AR-js-org/AR.js/issues/40
+      // mouseCursor.setAttribute('raycaster', 'objects: [forcegraph]');
 
       // Add forcegraph entity
       state.forcegraph = document.createElement('a-entity');

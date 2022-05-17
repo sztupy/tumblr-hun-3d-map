@@ -21095,6 +21095,7 @@
 		raycast(raycaster, intersects) {
 			if (raycaster.camera === null) {
 				console.error('THREE.Sprite: "Raycaster.camera" needs to be set in order to raycast against sprites.');
+				return;
 			}
 
 			_worldScale.setFromMatrixScale(this.matrixWorld);
