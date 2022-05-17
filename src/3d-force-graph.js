@@ -14222,6 +14222,8 @@ function InsertStackElement(node, body) {
     return obj;
   }
 
+  window.kapsuleFunction = index$2;
+  window.ThreeForceGraph = ForceGraph;
   return _3dForceGraph;
 
 }));

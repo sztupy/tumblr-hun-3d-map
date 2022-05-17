@@ -23,6 +23,7 @@ const settings = {
   nodeSize: 1
 }
 
+const isAR = typeof AFRAME !== 'undefined';
 const search = window.location.search ? window.location.search.slice(1, window.location.search.length).split('-') : [];
 const settingConfig = {};
 
@@ -627,37 +628,43 @@ const availableBlogs = Array.from(availableBlogIds).map(id => ({ id: id, name: t
 const elem = document.getElementById('3d-graph');
 
 // set up the Graph object
-const Graph = ForceGraph3D({ controlType: settings.controlType })(elem)
+const Graph =
+  isAR ? ForceGraphAR()(elem)
+  : ForceGraph3D({ controlType: settings.controlType })(elem);
 
 window.onload = function() {
-  Graph.enableNodeDrag(settings.allowNodeMove)
-    .onNodeDragEnd(node => {
-      node.fx = node.x;
-      node.fy = node.y;
-      node.fz = node.z;
-    })
+  Graph
     .linkColor(getLinkColor)
     .nodeColor(node => colorizeNode(node))
     .nodeVal(node => node.totalVal)
     .nodeRelSize(settings.nodeSize)
-    .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})` + (link.backData ? `<br>${link.target.name} -> ${link.source.name}  (${link.backData[0]}, ${link.backData[1]})` : ''))
     .linkWidth(link => highlightLinks.has(link) ? settings.selectedLinkWidth : 0)
     .linkDirectionalParticles(link => highlightLinks.has(link) ? 4 : 0)
     .linkDirectionalParticleWidth(0.5)
     .linkOpacity(1)
     .nodeResolution(1)
-    .nodeLabel(getNodeLabel)
     .numDimensions(settings.dimensions)
     .nodeThreeObject(getNodeObject)
     .onNodeClick(onNodeClick)
     .onLinkClick(link => onNodeClick(link.source))
     .graphData(initData)
-    .enableNavigationControls(settings.allowControls)
     .onDagError(function(n) { console.log('Error in DAG: ', n)});
 
     if (settings.dag) {
       Graph.dagMode(settings.dag)
     }
+
+  if (!isAR) {
+    Graph.enableNodeDrag(settings.allowNodeMove)
+      .onNodeDragEnd(node => {
+        node.fx = node.x;
+        node.fy = node.y;
+        node.fz = node.z;
+      })
+      .linkLabel(link => `${link.source.name} -> ${link.target.name} (${link.data[0]}, ${link.data[1]})` + (link.backData ? `<br>${link.target.name} -> ${link.source.name}  (${link.backData[0]}, ${link.backData[1]})` : ''))
+      .nodeLabel(getNodeLabel)
+      .enableNavigationControls(settings.allowControls)
+  }
 };
 
 // const ForceLink = Graph
@@ -852,7 +859,9 @@ let autoFocus = 'all';
 let lastSelectedNode = null;
 function runZoom() {
   if (autoFocus == 'all') {
-    Graph.zoomToFit(400);
+    if (!isAR) {
+      Graph.zoomToFit(400);
+    }
     setTimeout(runZoom, 1000);
   } else if (Number.isInteger(autoFocus)) {
     const node = nodeData.find(n => n.id == autoFocus);
@@ -1403,7 +1412,13 @@ let laserBuffer = null;
 let explosionBuffer = null;
 
 audioListener = new THREE.AudioListener();
-Graph.camera().add( audioListener );
+
+let globalCamera = null;
+
+if (!isAR) {
+  globalCamera = Graph.camera();
+  globalCamera.add( audioListener );
+}
 
 const audioLoader = new THREE.AudioLoader();
 audioLoader.load( 'img/466867__mikee63__blaster-shot-single-5.wav', function( buffer ) {
@@ -1415,6 +1430,16 @@ audioLoader.load( 'img/587196__derplayer__explosion-06.wav', function( buffer ) 
 
 
 function shootLaser() {
+  if (!globalCamera && isAR) {
+    const cameraEl = document.querySelector('a-entity[camera], a-camera');
+    globalCamera = cameraEl.object3D.children.filter(function (child) { return child.type === 'PerspectiveCamera'; })[0];
+    if (globalCamera) {
+      globalCamera.add( audioListener );
+    }
+  }
+
+  if (!globalCamera) return;
+
   const proj = {
     sphere: new THREE.Mesh( geometry, material ),
     count: 0,
@@ -1465,10 +1490,10 @@ function shootLaser() {
   nextLeft = !nextLeft;
 
   const startPos = new THREE.Vector3(nextLeft ? 50: -50, 0, 100);
-  startPos.applyMatrix4(Graph.camera().matrixWorld);
+  startPos.applyMatrix4(globalCamera.matrixWorld);
 
   const endPos = new THREE.Vector3(0, 0, -10000);
-  endPos.applyMatrix4(Graph.camera().matrixWorld);
+  endPos.applyMatrix4(globalCamera.matrixWorld);
 
   Graph.scene().add( proj.sphere );
 
