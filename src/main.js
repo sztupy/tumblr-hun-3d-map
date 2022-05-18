@@ -15,6 +15,7 @@ const settings = {
   autoZoom: false,
   allowNodeMove: false,
   allowControls: true,
+  shootEdges: false,
   nodeTransparency: 0.75,
   selectedNodeTransparency: 1.0,
   linkTransparency: 0.5,
@@ -150,6 +151,11 @@ setupSearch({'keepchg': true}, 'keepOnChange', 'keep_on_change', (e) => {
 setupSearch({'autozoom': true}, 'autoZoom', 'auto_zoom', (e) => {
   settings.autoZoom = e.target.checked;
 });
+
+setupSearch({'pewed': true}, 'shootEdges', 'shoot_edges', (e) => {
+  settings.shootEdges = e.target.checked;
+});
+
 
 setupSearch({'ctrl': true}, 'allowControls', 'allow_controls', (e) => {
   settings.allowControls = e.target.checked;
@@ -1481,6 +1487,22 @@ function shootLaser() {
       proj.count += 1;
 
       let nodesToDelete = [];
+      let edgesToDelete = [];
+
+      if (settings.shootEdges) {
+        let line = new THREE.Line3();
+        let resultPoint = new THREE.Vector3();
+
+        for (let link of linkData) {
+          if (link.source.__threeObj && link.target.__threeObj) {
+            line.set(link.source.__threeObj.position, link.target.__threeObj.position).closestPointToPoint(proj.sphere.position, true, resultPoint);
+
+            if (proj.sphere.position.distanceToSquared(resultPoint) < 65*65) {
+              edgesToDelete.push(link);
+            }
+          }
+        }
+      }
 
       for (let node of nodeData) {
         if (node.__threeObj) {
@@ -1490,7 +1512,7 @@ function shootLaser() {
         }
       }
 
-      if (nodesToDelete.length == 0) {
+      if (nodesToDelete.length == 0 && edgesToDelete == 0) {
         if (proj.count < 150) {
           proj.sphere.translateZ(100);
           requestAnimationFrame(proj.tick);
@@ -1513,6 +1535,18 @@ function shootLaser() {
 
         for (let node of nodesToDelete) {
           deleteNode(node, false, true);
+        }
+
+        for (let link of edgesToDelete) {
+          link.source.links.delete(link);
+          link.target.links.delete(link);
+          link.source.neighborsFrom.delete(link.target);
+          link.source.neighborsTo.delete(link.target);
+          link.target.neighborsFrom.delete(link.source);
+          link.target.neighborsTo.delete(link.source);
+
+          linkData.splice(linkData.indexOf(link), 1);
+          delete links[link.source.id][link.target.id];
         }
         Graph.graphData(initData);
         runClustering();
